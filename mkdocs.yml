@@ -1,0 +1,22 @@
+site_name: modb
+theme:
+  name: material
+  palette:
+    primary: white
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - admonition
+  - pymdownx.details
+  - attr_list
+  - md_in_html
+nav:
+    - Home: index.html
+    - Quickstart: Quickstart.md
+    - How & How-to: How & How-to.md
+    - Api: Api.md
+
+  
