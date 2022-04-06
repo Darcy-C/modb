@@ -128,17 +128,17 @@ node.update(
 
 ## Delete
 
-You can delete the inserted data from the node too.
+You can delete the inserted data from that node too.
 ```python
 node.delete('hello')
 ```
 !!! warning
-    if you do delete a lot, you better go and check out [this topic](../FAQ/#how-does-delete-work-why-file-still-holds-its-size-after-deletion).
+    if you do delete a lot, you better go and check out [this topic](./../FAQ/#how-does-delete-work-why-file-still-holds-its-size-after-deletion).
 
 
 ## Freeze
 
-Actually, there is a secret that I have not told you until now. All the operations that you have done so far are all happening in your RAM, the `node` is the embodiment of your actual data on your hard drive. This is for performance reasons, since IO-speed is way faster in RAM than on your disk.
+Actually, there is a secret that I have not told you until now. All the operations that you have done so far are all happening in your RAM, the `node` is the embodiment of your actual node on your hard drive. This is for performance reasons, since IO-speed is way faster in RAM than on your disk.
 
 So, if the data is in your RAM now, how do you move that data into your hard drive for future read. You guessed it, that's where `freeze` method comes into play.
 
