@@ -108,7 +108,7 @@ For those guys that still do not take this concept, you can think of the current
     "my_subtree": {
         # when you do operations to my_subtree,
         # like .insert, then the inserted key-value
-        # pair will go there.
+        # pair will go here.
     },
 }
 # I hope you understand it now.
@@ -118,7 +118,13 @@ So, recap again, this `create` method is just a special case of `insert`.
 
 ## Update
 
-todo
+```python
+node.update(
+    key="hi",
+    new_value="modb!",
+)
+```
+
 
 ## Delete
 
@@ -127,11 +133,29 @@ You can delete the inserted data from the node too.
 node.delete('hello')
 ```
 !!! warning
-    if you do delete a lot, you better go and check this topic.(todo)
+    if you do delete a lot, you better go and check out [this topic](/FAQ/#how-does-delete-work-why-file-still-holds-its-size-after-deletion).
+
+
+## Freeze
+
+Actually, there is a secret that I have not told you until now. All the operations that you have done so far are all happening in your RAM, the `node` is the embodiment of your actual data on your hard drive. This is for performance reasons, since IO-speed is way faster in RAM than on your disk.
+
+So, if the data is in your RAM now, how do you move that data into your hard drive for future read. You guessed it, that's where `freeze` method comes into play.
+
+```python
+node.freeze()
+```
+
+This one line of code will move everything in that `node` to the disk.
+!!! tip
+    * If you use this database library on your server, you probably should call this `freeze` method on `node` periodically. the database itself will not call this method automatically but only when `close` is called.
+    * Most of the time, you only need to call this method on so-called top `node`, the node which .connect() returns to you, the `freeze` method will figure it out which key-value pair data should really be freezed to the disk, which ensures that minimum disk-IO will be done.
 
 ## Close
 
 close the database object is important. otherwise your inserted data will be lost.
+!!! note "Recap"
+    `close` will `freeze` your `node` automatically, then close the file descriptor.
 
 ```python
 db.close()

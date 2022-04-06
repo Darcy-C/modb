@@ -13,10 +13,13 @@ markdown_extensions:
   - pymdownx.details
   - attr_list
   - md_in_html
+  - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
 nav:
     - Home: index.html
     - Quickstart: Quickstart.md
-    - How & How-to: How & How-to.md
+    - FAQ: FAQ.md
     - Api: Api.md
 
   
