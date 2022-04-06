@@ -15,6 +15,3 @@
 
 ## The name
 `modb` stands for My Own DataBase. It's built for my own purposes originally.
-
-
-
