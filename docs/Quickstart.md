@@ -136,6 +136,7 @@ node.delete('hello')
     if you do delete a lot, you better go and check out [this topic](./../FAQ/#how-does-delete-work-why-file-still-holds-its-size-after-deletion).
 
 
+
 ## Freeze
 
 Actually, there is a secret that I have not told you until now. All the operations that you have done so far are all happening in your RAM, the `node` is the embodiment of your actual node on your hard drive. This is for performance reasons, since IO-speed is way faster in RAM than on your disk.
