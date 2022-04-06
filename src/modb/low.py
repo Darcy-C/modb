@@ -9,7 +9,8 @@ import logging
 from datetime import datetime
 
 # 3rd imports
-from tqdm import tqdm
+# for my own testing purposes
+# from tqdm import tqdm
 
 # local imports
 from modb import utils
