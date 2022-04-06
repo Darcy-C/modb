@@ -133,7 +133,7 @@ You can delete the inserted data from the node too.
 node.delete('hello')
 ```
 !!! warning
-    if you do delete a lot, you better go and check out [this topic](/FAQ/#how-does-delete-work-why-file-still-holds-its-size-after-deletion).
+    if you do delete a lot, you better go and check out [this topic](../FAQ/#how-does-delete-work-why-file-still-holds-its-size-after-deletion).
 
 
 ## Freeze
