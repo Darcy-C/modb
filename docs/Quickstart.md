@@ -129,6 +129,12 @@ node.delete('hello')
 !!! warning
     if you do delete a lot, you better go and check this topic.(todo)
 
+## Close
 
+close the database object is important. otherwise your inserted data will be lost.
+
+```python
+db.close()
+```
 
 
