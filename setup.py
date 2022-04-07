@@ -5,7 +5,7 @@ setuptools.setup(
     version="0.0.1",
     author="darcy",
     # author_email="",
-    description="My Own DataBase Implementation",
+    description="modb, on-disk-database, the replacement for open. no third party dependency, using btree internally.",
     # long_description=long_description,
     # long_description_content_type="text/markdown",
     # url="https://github.com/pypa/sampleproject",
