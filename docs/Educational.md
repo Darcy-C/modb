@@ -168,5 +168,8 @@ With a sorted list, you can do something called **binary search** to do really r
 
 The above image shows you how to find the `7`. From the middle first, then do a comparison, which will tell you **go left** or **go right**, then repeat the same process recursively until you find your targeted number. As the image shows you, only 4 steps are needed. In fact, you can try to find other numbers like `6` o `37`, the result is just the same, fast.
 
+You see, every each step cuts the candidates by half, the complexity would be O(log_2 n) where `n` is the number of inserted keys.
+## External links
 
-
+1. [binary search algorithm](https://en.wikipedia.org/wiki/Binary_search_algorithm) from wikipedia
+  
