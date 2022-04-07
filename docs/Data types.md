@@ -35,6 +35,7 @@ We have data in database, the stored data must be typed for our convenience.
 ### String
 
 Your str-typed object will be encoded using `utf-8` encoding.
+
 ```
 data length | encoded-string
 U32         | vary

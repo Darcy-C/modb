@@ -124,7 +124,8 @@ node.update(
     new_value="modb!",
 )
 ```
-
+!!! warning
+    `update` may make un-used disk space just like `delete`, since the old value data remains in the binary of your file. go and check next topic to know more about this behavior.
 
 ## Delete
 
@@ -156,12 +157,23 @@ This one line of code will move everything in that `node` to the disk.
 
 ## Close
 
-close the database object is important. otherwise your inserted data will be lost.
+`close` the database object is important. otherwise your inserted data will be lost.
 !!! note "Recap"
     `close` will `freeze` your `node` automatically, then close the file descriptor.
 
 ```python
 db.close()
+```
+
+```python title="Best practice"
+import modb
+db = modb.Database("./a.modb")
+try:
+    node = db.connect()
+    ...
+
+finally:
+    db.close()
 ```
 
 
