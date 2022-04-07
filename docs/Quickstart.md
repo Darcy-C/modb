@@ -70,7 +70,7 @@ This line of code will return `Data` object.
 !!! summary "What's `Data` object?"
     In this context, `Data` is a class, this class only holds the pointer information, which guides us to find the real data.
 
-After you get a basic understanding of `Data`, you'll know that this .search method only find the data pointer that points to the actual data.
+After you get a basic understanding of `Data`, you'll know that this `search` method only find the data pointer that points to the actual data.
 
 If you want to get that actual data(the value data you inserted before), you can do the following.
 
@@ -140,8 +140,10 @@ node.delete('hello')
 ## Freeze
 
 Actually, there is a secret that I have not told you until now. All the operations that you have done so far are all happening in your RAM, the `node` is the embodiment of your actual node on your hard drive. This is for performance reasons, since IO-speed is way faster in RAM than on your disk.
+!!! note
+    Only key data and `node` is stored in your RAM, the `node` has an alias called `index`. So you can think that `index` is cached in you RAM.
 
-So, if the data is in your RAM now, how do you move that data into your hard drive for future read. You guessed it, that's where `freeze` method comes into play.
+So, if the `node` is in your RAM now, how do you move that `node` into your hard drive for future read. You guessed it, that's where `freeze` method comes into play.
 
 ```python
 node.freeze()

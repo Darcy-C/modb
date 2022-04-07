@@ -1,6 +1,65 @@
+## Why is it fast
+
+Two reasons
+
+1. **Using btree**
+   
+    This implementation of database use btree as data structure. btree is a very good structure to store and fast-query the information. If you do not know btree, you can think of it as a binary search tree.
+
+1. using so-called **Virtual btree**
+
+    Btree involves some construction while inserting the key to the tree (like splitting etc.), this kind of procedure do read and write to our storage. 
+    
+    So we have some options now, since we have two different storage devices, RAM and hard-disk, we need to determine where to put our `node`.
+
+    1. **Only using hard-disk to store**
+
+        * Properties
+
+            * ➖ `relatively slow`
+            * ➕ `relatively cheap price`
+            * ➕ `permanent storage`
+            * ➕ `big storage size`
+
+        * Pros
+
+            1. No RAM required, you can insert lots of data into your disk directly and can be read in the future directly by using `f.read`/ `f.write`/ `f.seek`/ etc.
+            2. No `index` should be read from disk to RAM at all, just read-then-jump.
+
+        * Cons
+
+            1. If all the operations (btree contruction) happen in your hard drive, every related method like `insert`/ `search`/ etc.  method will be slow.
+
+    2. **Only using RAM to store**
+
+        * Properties
+
+            * ➕ `really really fast`
+            * ➖ `relatively expensive price`
+            * ➖ `limited memory size`
+            * ➖ `data will be lost after power failure`
+
+        * Pros
+
+            1. really fast btree contruction
+
+        * Cons
+
+            1. the `index` should be read from disk first, so if your `index` itself is big, 4GiB for example, this index should be read first, this reading process is slow. but faster when you really do query.
+            2. You should store that information right on time to the disk, otherwise your inserted data and your constructed btree will be lost.
+   
+    3. **Mixed** (We are using this way in our implementation)
+   
+        1. Every btree constructions are happening in RAM for performance, and will be stored in you hard-disk when you call `freeze` method.
+   
+        2. When you open a database, the `index` will be read on demand from the disk, and will be converted to `VirtualBNode`, which will be used to perform future btree operations, that is to say, every operation will be done to the cached `VirtualBNode` instance first rather than on your disk.
+        3. Since the `index` is read on demand, your database will be opened instantly and your RAM usage should be fine and will be occupied on demand.
+  
+
+
 ## How does `search` work and what will it return
 
-The `search` method will find your targeted key by recursively jumping to the right node of the btree, If the key is found, then `Data` type object will be returned. otherwise raise the exception (modb.error.KeyNotFound)
+The `search` method will find your targeted key by recursively jumping to the right node of the btree, If the key is found, then `Data` type object will be returned. otherwise raise the exception `modb.error.KeyNotFound`
 
 ## What is `Data`
 
