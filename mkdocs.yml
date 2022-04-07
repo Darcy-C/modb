@@ -19,7 +19,7 @@ markdown_extensions:
 nav:
     - Home: index.html
     - Quickstart: Quickstart.md
-    - Data types: Data types.md
+    - Data types: Data_types.md
     - FAQ: FAQ.md
     - Educational: Educational.md
     - Api: Api.md

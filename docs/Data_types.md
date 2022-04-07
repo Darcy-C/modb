@@ -9,7 +9,7 @@ We have data in database, the stored data must be typed for our convenience.
 | Tree    | 2    | `modb.low.VirtualBNode` |
 | Empty   | 3    | None                    |
 | Boolean | 4    | bool                    |
-| Bytes   | 5    | byte                    |
+| Bytes   | 5    | bytes                   |
 
 1. The first column is the type class used by modb internally.
 2. The second column is the type code used by modb internally to identify the type of the data read in database binary. 
@@ -21,6 +21,11 @@ We have data in database, the stored data must be typed for our convenience.
 
     !!! note
         Actually you don't need to care about this type conversion, `modb` will do the conversion automatically for you.
+
+!!! important
+    * Unlike value data, the type of inserted key data is limited, only `String`, `Number` and `Bytes` are supported.
+    * Only one type can be inserted to one `node`, for example, if you insert str-type key once, then you can not insert other typed data from now on. The value data does not have this limitation.
+    * For simplicity, this limitation will not be released in near future.
 
 
 ## Layout in binary
