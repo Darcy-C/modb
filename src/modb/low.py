@@ -339,7 +339,7 @@ class Data:
         # compare function used by btree
         # that's the key to the btree implementation.
 
-        if type(other) in [str]:
+        if type(other) in [str, int, float, bytes]:
             return self.get(using_cache=True) < other
         elif type(other) is Data:
             return self.get(using_cache=True) < other.get(using_cache=True)
@@ -464,6 +464,8 @@ class VirtualBNode:
         # when inserting, if the key already exists
         # , modb.error.DuplicateKeyFound will be raised.
 
+        # note, the supported type of inserted data is listed in docs.
+
         # type of value can be any supported type except Tree type
         # , since Tree type value can be created by .create method.
         # OR can be a Data object, in this case, the pointed data
@@ -560,6 +562,43 @@ class VirtualBNode:
             # 2. .search('a')
 
         return value
+
+    def items(self, ascending=True):
+        # items method acts just like dict.items do
+        # , yield list of key-value pairs (all Data typed)
+
+        # technical details:
+        # this method will do an in-order traversal on self.
+
+        count = len(self.keys)
+
+        if ascending:
+
+            for idx in range(count):
+                # 1. traverse the one side
+                if not self.is_leaf():
+                    yield from self.children[idx].items(ascending)
+
+                # 2. return root node (key, value)
+                yield self.keys[idx], self.values[idx]
+
+            # 3. traverse the most-other side
+            if not self.is_leaf():
+                yield from self.children[idx+1].items(ascending)
+
+        elif not ascending:
+
+            for idx in range(count, 0, -1):
+                # 1. traverse the one side
+                if not self.is_leaf():
+                    yield from self.children[idx].items(ascending)
+
+                # 2. return root node (key, value)
+                yield self.keys[idx-1], self.values[idx-1]
+
+            # 3. traverse the most-other side
+            if not self.is_leaf():
+                yield from self.children[0].items(ascending)
 
     def update(self, key, new_value):
         # update the value of the given key.
@@ -865,9 +904,6 @@ class VirtualBNode:
         return blob_p
 
     def _insert(self, key: Data, value: Data):
-        k = key.get(using_cache=True)
-        assert type(k) is str, "type of the key must be str for now"
-
         vnode_targeted = self.find_closest_leaf_node(
             key.get(using_cache=True)
         )
@@ -1177,7 +1213,8 @@ class VirtualBNode:
                 # not accessed yet. access it right now.
                 child.access()
 
-            return child.search(key)
+            # note, critical typo fixed.
+            return child._search(key)
 
     def seek_written_position(self):
         # recap again, if node_p is set to -1
