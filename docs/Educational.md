@@ -33,14 +33,21 @@ for row in rows:
     cells = row.split(',')
     database.append(cells)
     
-# now, # for example, we want to query 
-# the `english` in the first coloumn.
+# now, for example, we want to query 
+# the `python` in the first column.
+
+# input variable
 query = "python"
+col = 0
+
+# output varible
 results = []
 
+# do logic part
 for record in database:
-    if record[0] == query:
+    if record[col] == query:
         results.append(record)
+
 
 # display the results
 print(results)
