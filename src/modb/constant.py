@@ -8,7 +8,7 @@ BNODE_ORDER = 64
 
 BNODE_MAX_CAPACITY = BNODE_ORDER - 1
 
-# not used yet, for btree deletion
+# used for btree deletion
 BNODE_MIN_CAPACITY = math.ceil(
     BNODE_ORDER / 2
 ) - 1
