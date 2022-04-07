@@ -6,6 +6,7 @@ import math
 # note, in this context, order is alias for page.
 BNODE_ORDER = 64
 
+# used for btree insertion
 BNODE_MAX_CAPACITY = BNODE_ORDER - 1
 
 # used for btree deletion
