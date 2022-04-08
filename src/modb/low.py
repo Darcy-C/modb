@@ -585,7 +585,7 @@ class VirtualBNode:
 
         # two possibilities, leaf or internal node
         # note, following codes can shrink even further
-        # , if you use third party `zip` function.
+        # , if you use custom `zip` function.
         # (like using fill parameter)
         if self.is_leaf():
             for key, value in zip(
