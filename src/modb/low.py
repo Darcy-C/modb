@@ -570,35 +570,41 @@ class VirtualBNode:
         # technical details:
         # this method will do an in-order traversal on self.
 
-        count = len(self.keys)
-
         if ascending:
+            def do(x): return x  # nothing
+        else:
+            def do(x): return list(reversed(x))
 
-            for idx in range(count):
-                # 1. traverse the one side
-                if not self.is_leaf():
-                    yield from self.children[idx].items(ascending)
+        keys = do(self.keys)
+        values = do(self.values)
+        children = do(self.children)
 
-                # 2. return root node (key, value)
-                yield self.keys[idx], self.values[idx]
+        # 1. traverse one side
+        # 2. yield relative root node (pair)
+        # 3. traverse the most-other side
 
-            # 3. traverse the most-other side
-            if not self.is_leaf():
-                yield from self.children[idx+1].items(ascending)
+        # two possibilities, leaf or internal node
+        if self.is_leaf():
+            for key, value in zip(
+                keys,
+                values,
+            ):
+                yield key, value
 
-        elif not ascending:
+        else:
+            for key, value, child in zip(
+                keys,
+                values,
+                children,
+            ):
+                # has child, do recursive call.
+                yield from child.items(ascending)
 
-            for idx in range(count, 0, -1):
-                # 1. traverse the one side
-                if not self.is_leaf():
-                    yield from self.children[idx].items(ascending)
+                # same as is_leaf if branch
+                yield key, value
 
-                # 2. return root node (key, value)
-                yield self.keys[idx-1], self.values[idx-1]
-
-            # 3. traverse the most-other side
-            if not self.is_leaf():
-                yield from self.children[0].items(ascending)
+            # has child, do recursive call.
+            yield from children[-1].items(ascending)
 
     def update(self, key, new_value):
         # update the value of the given key.
