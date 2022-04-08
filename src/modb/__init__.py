@@ -10,5 +10,6 @@ note, modb stands for My Own DataBase."""
 # , but it just has more low-level api to call.
 # we will just use modb.high.Database in default.
 
+# import common name for user convenience
 from modb.high import Database
 from modb.low import Data
