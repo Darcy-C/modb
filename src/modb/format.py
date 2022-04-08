@@ -6,7 +6,7 @@ from modb.formatcore import *
 from modb.constant import *
 
 # alias
-Pointer = U32
+Pointer = U64
 
 
 class Bytes(Base):

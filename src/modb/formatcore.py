@@ -83,3 +83,8 @@ class U24(PrimitiveTypeBase):
 class U32(PrimitiveTypeBase):
     length = 4
     signed = False
+
+
+class U64(PrimitiveTypeBase):
+    length = 8
+    signed = False
