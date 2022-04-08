@@ -326,11 +326,15 @@ class Data:
 
         # ----------------------------
 
+        is_tree = type(data) is VirtualBNode
+        if is_tree:
+            self.is_tree = True
+            
+        
         if (
-            type(data) is VirtualBNode
+            is_tree
             or using_cache
         ):
-            self.is_tree = True
             self.cached = data
 
         return data
