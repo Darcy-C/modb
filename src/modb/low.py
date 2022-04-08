@@ -575,6 +575,11 @@ class VirtualBNode:
         else:
             def do(x): return list(reversed(x)) # mirrored
 
+        # like any other method, you should make sure that
+        # the manipulated node is accessed first.
+        if not self.accessed:
+            self.access()
+
         keys = do(self.keys)
         values = do(self.values)
         children = do(self.children)
