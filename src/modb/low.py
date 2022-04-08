@@ -16,14 +16,7 @@ from datetime import datetime
 from modb import utils
 from modb import error
 from modb.format import *
-
-
-logging.basicConfig(
-    level=logging.DEBUG,
-    format='%(levelname)s|%(asctime)s|%(message)s',
-)
-
-logger = logging.getLogger("modb_logger")
+from modb.log import logger
 
 
 # note, in this source code, when I say `position` or `pointer`, they are
