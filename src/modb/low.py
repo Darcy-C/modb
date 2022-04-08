@@ -342,6 +342,16 @@ class Data:
 
 
 class MyIO:
+    # this MyIO class makes change-file-object-on-the-fly
+    # possible, just using `change_f` method to change 
+    # the current using file object.
+    
+    # note, in `modb`, MyIO will be used for the hot-reloading
+    # of the database file, go and check `VirtualBNode.vacuum`
+    # which take advantage of `MyIO.change_f`, since `vacuum`
+    # method will create a new copy of current database file
+    # , then a switch from old `f` to new `f` should be done.
+    
     def __init__(self, f):
         # real one
         self.f = f
@@ -1439,7 +1449,7 @@ class Database:
             # do nothing, just using stardard-io
             self.f = self._f
 
-        # wrap
+        # wrapper, go check `MyIO` class for more information
         self.f = MyIO(self.f)
 
         # make sure we are at the beginning
