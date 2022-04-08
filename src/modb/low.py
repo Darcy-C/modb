@@ -329,8 +329,7 @@ class Data:
         is_tree = type(data) is VirtualBNode
         if is_tree:
             self.is_tree = True
-            
-        
+
         if (
             is_tree
             or using_cache
@@ -577,7 +576,7 @@ class VirtualBNode:
         if ascending:
             def do(x): return x  # nothing
         else:
-            def do(x): return list(reversed(x)) # mirrored
+            def do(x): return list(reversed(x))  # mirrored
 
         # like any other method, you should make sure that
         # the manipulated node is accessed first.
