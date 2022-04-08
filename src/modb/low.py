@@ -573,7 +573,7 @@ class VirtualBNode:
         if ascending:
             def do(x): return x  # nothing
         else:
-            def do(x): return list(reversed(x))
+            def do(x): return list(reversed(x)) # mirrored
 
         keys = do(self.keys)
         values = do(self.values)
@@ -584,6 +584,9 @@ class VirtualBNode:
         # 3. traverse the most-other side
 
         # two possibilities, leaf or internal node
+        # note, following codes can shrink even further
+        # , if you use third party `zip` function.
+        # (like using fill parameter)
         if self.is_leaf():
             for key, value in zip(
                 keys,
