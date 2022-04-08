@@ -1219,7 +1219,6 @@ class VirtualBNode:
                 # not accessed yet. access it right now.
                 child.access()
 
-            # note, critical typo fixed.
             return child._search(key)
 
     def seek_written_position(self):
