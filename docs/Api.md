@@ -250,6 +250,10 @@
         * before this method is called, index will be cached in memory and all the index (btree) operation (like splitting, merging etc) is performed in memory for performance reasons.
 
         * this `freeze` method will be called automatically while you call `close` to the database object.
+  
+    !!! tip
+
+        like I mentioned in Quickstart, if you use `modb` database library on your server, you probably should call this `freeze` method on `node` periodically. the database itself will not call this method automatically but only when `close` is called.
 
     !!! warning
 
