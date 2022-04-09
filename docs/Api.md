@@ -206,7 +206,33 @@
 
         your deleted data will still be in your binary of the file. do `vacuum` to make sure it's safe-deleted. go and check FAQ for more information.
 
+    ### create
 
+    `Parameters`
+
+    : **key** `see Data types`
+
+    `return`
+
+    : *modb.low.Data* - the new created sub-node value
+
+    !!! note
+
+        * this `create` method is a special `insert` method instead of inserting normal type (string, number etc.) you'll insert a empty tree (tree type)
+
+        * most of the time, this is for building a hierarchical structure.
+
+    ```python title="Sample code"
+    node.create("sub")
+
+    # then you can get the sub node by doing
+    sub = node.search("sub").get()
+
+    # ... there you can do any operations just
+    # like you do to the root `node`
+    sub.insert("hello", "world")
+    ```
+    
 
 
     
