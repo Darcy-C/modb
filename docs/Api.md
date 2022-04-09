@@ -128,6 +128,8 @@
 
     : **reverse** `bool`
 
+        : if set, the returned stream will be in reverse order.
+
     `return`
 
     :   key, value Data *generator*
