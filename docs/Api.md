@@ -233,6 +233,19 @@
     sub.insert("hello", "world")
     ```
     
+    ### freeze
+
+    moves `index` to the disk for future reuse
+
+    !!! note
+
+        * before this method is called, index will be cached in memory and all the index (btree) operation (like splitting, merging etc) is performed in memory for performance reasons.
+
+        * this `freeze` method will be called automatically while you call `close` to the database object.
+
+    !!! warning
+
+        this method involves disk-IO operations, call it when it's really needed.
 
 
     
