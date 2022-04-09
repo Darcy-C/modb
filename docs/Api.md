@@ -35,7 +35,7 @@
 
     ```python title="Best practice"
     import modb
-    
+
     db = modb.Database("./a.modb")
     try:
         node = db.connect()
@@ -44,6 +44,10 @@
     finally:
         db.close()
     ```
+
+    !!! warning
+
+        if the database object is not closed correctly, then all the operations before last `freeze` operation will be lost. go and check `VirtualBNode.freeze` method for more information.
 
 
 ## *class* **modb.low.Data**
