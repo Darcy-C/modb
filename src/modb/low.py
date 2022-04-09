@@ -343,15 +343,15 @@ class Data:
 
 class MyIO:
     # this MyIO class makes change-file-object-on-the-fly
-    # possible, just using `change_f` method to change 
+    # possible, just using `change_f` method to change
     # the current using file object.
-    
+
     # note, in `modb`, MyIO will be used for the hot-reloading
     # of the database file, go and check `VirtualBNode.vacuum`
     # which take advantage of `MyIO.change_f`, since `vacuum`
     # method will create a new copy of current database file
     # , then a switch from old `f` to new `f` should be done.
-    
+
     def __init__(self, f):
         # real one
         self.f = f
@@ -569,17 +569,17 @@ class VirtualBNode:
 
         return value
 
-    def items(self, ascending=True):
+    def items(self, reversed=False):
         # items method acts just like dict.items do
         # , yield list of key-value pairs (all Data typed)
 
         # technical details:
         # this method will do an in-order traversal on self.
 
-        if ascending:
-            def do(x): return x  # nothing
-        else:
+        if reversed:
             def do(x): return list(reversed(x))  # mirrored
+        else:
+            def do(x): return x  # nothing
 
         # like any other method, you should make sure that
         # the manipulated node is accessed first.
@@ -612,13 +612,56 @@ class VirtualBNode:
                 children,
             ):
                 # has child, do recursive call.
-                yield from child.items(ascending)
+                yield from child.items(reversed)
 
                 # same as is_leaf if branch
                 yield key, value
 
             # has child, do recursive call.
-            yield from children[-1].items(ascending)
+            yield from children[-1].items(reversed)
+
+    def range(
+        self,
+        key_start,
+        key_stop,
+    ):
+        # do a range query, yield key-value pair stream
+        # this operation is very efficient thanks
+        # to btree.
+
+        # note, key_stop will not be included in the stream.
+
+        node_a, idx_a = self.peek(key_start)
+        node_b, idx_b = self.peek(key_stop)
+
+        if idx_b is not None:
+            stop_indicator = node_b.keys[idx_b]
+        else:
+            stop_indicator = None
+
+        for key, value in node_a.inorder_from(idx_a):
+            if (
+                stop_indicator
+                and key is stop_indicator
+            ):
+                break
+
+            yield key, value
+
+    def inorder_from(self, idx):
+
+        for idx in range(
+            idx,
+            len(self.keys),
+        ):
+            yield self.keys[idx], self.values[idx]
+
+            if not self.is_leaf():
+                yield from self.children[idx+1].items()
+
+        if self.parent is not None:
+            which_idx = self.find_from_which_branch()
+            yield from self.parent.inorder_from(which_idx)
 
     def update(self, key, new_value):
         # update the value of the given key.
@@ -1205,6 +1248,48 @@ class VirtualBNode:
 
         if self.parent is not None:
             self.parent.check_after_insert()
+
+    def peek(self, key):
+        # get exact or closest-right match, used by _search
+
+        idx = bisect.bisect_left(
+            self.keys,
+            key,
+        )
+
+        not_most_right = idx < len(self.keys)
+
+        if not_most_right:
+            if self.keys[idx].get(using_cache=True) == key:
+                return self, idx
+
+        if self.is_leaf():
+            # if the searched key is still not found
+            # , the searched key does not exist.
+
+            # but in `peek`, try to return the closest
+            # -right one.
+
+            if not_most_right:
+                return self, idx
+            else:
+                return self, None
+
+        else:
+            # otherwise, keep searching.
+
+            child = self.children[idx]
+            if not child.accessed:
+                # not accessed yet. access it right now.
+                child.access()
+
+            node, idx = child.peek(key)
+            if idx is not None:
+                return node, idx
+            elif not_most_right:
+                return self, idx
+            else:
+                return self, None
 
     def _search(self, key):
 
