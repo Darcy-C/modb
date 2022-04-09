@@ -149,7 +149,7 @@
 
     `return`
 
-    : *modb.low.Data*
+    : *modb.low.Data* - old value
 
     update the value of the given key. return the old value Data object.
 
@@ -189,6 +189,6 @@
 
         since this operation makes copy, please only do when it's really really needed.
     
-    
+
 
     
