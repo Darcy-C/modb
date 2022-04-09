@@ -38,6 +38,13 @@
 ## *class* **modb.low.Data**
 > Alias: modb.Data
 
+!!! tip
+
+    * this class will be used to refer to the data on the disk using pointer in my btree implentation, the inserted key data will be cached directly. and the inserted value data can be theoretically cached too, but since cache uses RAM to boost speed, while most value data is quite big, so RAM used only to cache the index (the bnode structure and the key data for comparison) will be more practical. 
+
+    * that does not mean value data is not recommended to cache, you can cache your frequently accessed value in your logic code. you just need to make sure the cached value data is carefully selected in order to take full advantage of your RAM.   
+
+
 `Methods`
 
 :   ### get
