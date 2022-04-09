@@ -10,7 +10,7 @@
     open the database file by path, if it does not exist, the empty database file will be created.
 
     !!! note "Note about file path"
-        If the given path involves missing directory, you must create that directory first, then open the file.
+        If the given path involves missing directory, you must create that directory first, then open the file, which behavior is the same as built-in `open`.
 
 
     * **read_only** `bool`
