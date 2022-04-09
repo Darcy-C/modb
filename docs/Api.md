@@ -31,7 +31,19 @@
 
     ### close
 
-    freeze the root node then release the file object. This method must be called in the end.
+    do `freeze` to the root node then close the file object. This method must be called in the end.
+
+    ```python title="Best practice"
+    import modb
+    
+    db = modb.Database("./a.modb")
+    try:
+        node = db.connect()
+        ...
+
+    finally:
+        db.close()
+    ```
 
 
 ## *class* **modb.low.Data**

@@ -167,6 +167,7 @@ db.close()
 
 ```python title="Best practice"
 import modb
+
 db = modb.Database("./a.modb")
 try:
     node = db.connect()
