@@ -622,55 +622,23 @@ class VirtualBNode:
 
     def range(
         self,
-        key_start,
-        key_stop,
+        key_low,
+        key_high,
         reverse=False,
     ):
         # do a range query, yield key-value pair stream
         # this operation is very efficient thanks
         # to btree.
 
-        # note, key_stop will not be included in the stream.
+        # if reverse is set, the stream will be efficiently
+        # reversed.
 
-        node_a, idx_a = self.peek(key_start)
-        node_b, idx_b = self.peek(key_stop)
+        # note, key_high will not be included in the stream.
 
-        if idx_b is not None:
-            stop_indicator = node_b.keys[idx_b]
+        if reverse:
+            yield from self._range_reversed(key_high, key_low)
         else:
-            stop_indicator = None
-
-        for key, value in node_a.inorder_from(idx_a, reverse):
-            if (
-                stop_indicator
-                and key is stop_indicator
-            ):
-                break
-
-            yield key, value
-
-    def inorder_from(self, start_idx, reverse):
-        count = len(self.keys)
-
-        keys = self.keys
-        values = self.values
-        children = self.children
-
-        for idx in range(
-            start_idx,
-            count,
-        ):
-            yield keys[idx], values[idx]
-
-            if not self.is_leaf():
-                yield from children[idx+1].items(reverse)
-
-        if self.parent is not None:
-            which_idx = self.find_from_which_branch()
-            yield from self.parent.inorder_from(
-                which_idx,
-                reverse,
-            )
+            yield from self._range(key_low, key_high)
 
     def update(self, key, new_value):
         # update the value of the given key.
@@ -879,6 +847,92 @@ class VirtualBNode:
 
     # private method as follows
 
+    def _range(
+        self,
+        key_low,
+        key_high,
+    ):
+        node_a, idx_a = self.peek(key_low)
+        node_b, idx_b = self.peek(key_high)
+
+        if idx_b is not None:
+            stop_indicator = node_b.keys[idx_b]
+        else:
+            stop_indicator = None
+
+        for key, value in node_a.inorder_from(idx_a):
+            if (
+                stop_indicator
+                and key is stop_indicator
+            ):
+                break
+
+            yield key, value
+
+    def _range_reversed(
+        self,
+        key_high,
+        key_low,
+    ):
+        node_a, idx_a = self.peek(key_high)
+        node_b, idx_b = self.peek(key_low)
+
+        stop_indicator = node_b.keys[idx_b]
+
+        if idx_a is None:
+            stream = self.items(True)
+        else:
+            stream = node_a.inorder_from_reversed(idx_a)
+
+        for key, value in stream:
+            yield key, value
+
+            if key is stop_indicator:
+                break
+
+    def inorder_from_reversed(self, start_idx):
+        keys = self.keys
+        values = self.values
+        children = self.children
+
+        for idx in range(
+            start_idx-1,
+            -1,
+            -1,
+        ):
+            yield keys[idx], values[idx]
+
+            if not self.is_leaf():
+                yield from children[idx].items(reverse=True)
+
+        if self.parent is not None:
+            which_idx = self.find_from_which_branch()
+            yield from self.parent.inorder_from_reversed(
+                which_idx,
+            )
+
+    def inorder_from(self, start_idx):
+        count = len(self.keys)
+
+        keys = self.keys
+        values = self.values
+        children = self.children
+
+        for idx in range(
+            start_idx,
+            count,
+        ):
+            yield keys[idx], values[idx]
+
+            if not self.is_leaf():
+                yield from children[idx+1].items()
+
+        if self.parent is not None:
+            which_idx = self.find_from_which_branch()
+            yield from self.parent.inorder_from(
+                which_idx,
+            )
+
     def init_node(self, node: BNodeFormat):
         keys = [
             Data(p, self.f)
@@ -1040,7 +1094,8 @@ class VirtualBNode:
         return child.find_inorder_predecessor_node(-1)
 
     def find_from_which_branch(self):
-        idx = self.parent.children.index(self)
+        children = self.parent.children
+        idx = children.index(self)
         return idx
 
     def merge_me(self):
@@ -1259,7 +1314,7 @@ class VirtualBNode:
             self.parent.check_after_insert()
 
     def peek(self, key):
-        # get exact or closest-right match, used by _search
+        # get exact or closest-right match, used by `search` and `range`
 
         idx = bisect.bisect_left(
             self.keys,
@@ -1301,33 +1356,20 @@ class VirtualBNode:
                 return self, None
 
     def _search(self, key):
+        node, idx = self.peek(key)
 
-        idx = bisect.bisect_left(
-            self.keys,
-            key,
-        )
+        # note, if idx is None, then the searched key is
+        # greater than the max key value in the node.
+        if (
+            idx is not None and
+            node.keys[idx].get(using_cache=True) == key
+        ):
+            return node, idx
 
-        if idx < len(self.keys):
-            if self.keys[idx].get(using_cache=True) == key:
-                return self, idx
-
-        if self.is_leaf():
-            # if the searched key is still not found
-            # , the searched key does not exist.
-
+        else:
             raise error.KeyNotFound(
                 key,
             )
-
-        else:
-            # otherwise, keep searching.
-
-            child = self.children[idx]
-            if not child.accessed:
-                # not accessed yet. access it right now.
-                child.access()
-
-            return child._search(key)
 
     def seek_written_position(self):
         # recap again, if node_p is set to -1
