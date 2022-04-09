@@ -190,5 +190,23 @@
         since this operation makes copy, please only do when it's really really needed.
     
 
+    ### delete
+
+    `Parameters`
+
+    : **key** `see Data types`
+
+    `return`
+
+    : *modb.low.Data* - the deleted value data
+
+    delete the key-value pair by key, then return the deleted value data(Data object)
+
+    !!! warning
+
+        your deleted data will still be in your binary of the file. do `vacuum` to make sure it's safe-deleted. go and check FAQ for more information.
+
+
+
 
     
