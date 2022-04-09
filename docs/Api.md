@@ -5,7 +5,7 @@
 
 `Parameters`
 
-:   * **filename** `str`
+:   * **filename** `str` (required)
 
     open the database file by path, if it does not exist, the empty database file will be created.
 
@@ -65,9 +65,9 @@
 
     `Parameters`
 
-    : **key** `see Data types`
+    : **key** `see Data types` (required)
 
-    : **value** `see Data types`
+    : **value** `see Data types` (required)
 
     `return`
 
@@ -80,7 +80,7 @@
 
     `Parameters`
 
-    : **key** `see Data types`
+    : **key** `see Data types` (required)
 
     `return`
 
@@ -93,7 +93,7 @@
 
     `Parameters`
 
-    : **key_path** `list`
+    : **key_path** `list` (required)
 
     `return`
 
@@ -128,9 +128,9 @@
 
     `Parameters`
 
-    : **key_low** `see Data types`
+    : **key_low** `see Data types` (required)
 
-    : **key_high** `see Data types`
+    : **key_high** `see Data types` (required)
 
     : **reverse** `bool`
 
@@ -151,9 +151,9 @@
 
     `Parameters`
 
-    : **key** `see Data types`
+    : **key** `see Data types` (required)
 
-    : **new_value** `see Data types`
+    : **new_value** `see Data types` (required)
 
     `return`
 
@@ -202,7 +202,7 @@
 
     `Parameters`
 
-    : **key** `see Data types`
+    : **key** `see Data types` (required)
 
     `return`
 
@@ -216,9 +216,9 @@
 
     ### create
 
-    `Parameters`
+    `Parameters` 
 
-    : **key** `see Data types`
+    : **key** `see Data types` (required)
 
     `return`
 
