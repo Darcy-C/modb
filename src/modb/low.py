@@ -568,7 +568,7 @@ class VirtualBNode:
             # 2. .search('a')
 
         return value
-    
+
     def items(self, reverse=False):
         # items method acts just like dict.items do
         # , yield list of key-value pairs (all Data typed)
@@ -624,6 +624,7 @@ class VirtualBNode:
         self,
         key_start,
         key_stop,
+        reverse=False,
     ):
         # do a range query, yield key-value pair stream
         # this operation is very efficient thanks
@@ -639,7 +640,7 @@ class VirtualBNode:
         else:
             stop_indicator = None
 
-        for key, value in node_a.inorder_from(idx_a):
+        for key, value in node_a.inorder_from(idx_a, reverse):
             if (
                 stop_indicator
                 and key is stop_indicator
@@ -648,21 +649,28 @@ class VirtualBNode:
 
             yield key, value
 
-    def inorder_from(self, idx):
-        
+    def inorder_from(self, start_idx, reverse):
+        count = len(self.keys)
+
+        keys = self.keys
+        values = self.values
+        children = self.children
 
         for idx in range(
-            idx,
-            len(self.keys),
+            start_idx,
+            count,
         ):
-            yield self.keys[idx], self.values[idx]
+            yield keys[idx], values[idx]
 
             if not self.is_leaf():
-                yield from self.children[idx+1].items()
+                yield from children[idx+1].items(reverse)
 
         if self.parent is not None:
             which_idx = self.find_from_which_branch()
-            yield from self.parent.inorder_from(which_idx)
+            yield from self.parent.inorder_from(
+                which_idx,
+                reverse,
+            )
 
     def update(self, key, new_value):
         # update the value of the given key.
