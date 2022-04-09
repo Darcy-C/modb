@@ -139,4 +139,29 @@
         this operation is very efficient thanks to the btree structure.
 
 
+    ### update
 
+    `Parameters`
+
+    : **key** `see Data types`
+
+    : **new_value** `see Data types`
+
+    `return`
+
+    : *modb.low.Data*
+
+    update the value of the given key. return the old value Data object.
+
+    !!! warning
+
+        the old value will not be eraised from your disk before you do `vacuum`.
+
+    !!! tip "Technical details"
+
+        This operation only replaces the old value pointer with the new value pointer. quick recap: Data object holds the pointer.
+    
+
+
+
+    

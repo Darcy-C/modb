@@ -646,7 +646,7 @@ class VirtualBNode:
         # eraised from your disk before you do
         # .vacuum
 
-        # technical detail:
+        # technical details:
         # replace the old value pointer
         # with the new value pointer
         # , then return the old value Data object
