@@ -59,9 +59,9 @@
 
     `Parameters`
 
-    : *key* `see Data types`
+    : **key** `see Data types`
 
-    : *value* `see Data types`
+    : **value** `see Data types`
 
     `return`
 
@@ -74,7 +74,7 @@
 
     `Parameters`
 
-    : *key* `see Data types`
+    : **key** `see Data types`
 
     `return`
 
@@ -87,7 +87,7 @@
 
     `Parameters`
 
-    : *key_path* `list`
+    : **key_path** `list`
 
     `return`
 
@@ -100,5 +100,43 @@
         * since this database implementation support nested node, which is just like json in binary format. the hierarchy can be created by using `create` method on node.
     
         * if subnode (subtree) is found, return that subtree (Data), so you need to call `get` first then you can use `create` / `insert` etc. just like you do on the root `node` object. quick recap: modb.low.VirtualBNode is the key to my database implementation.
+
+    ### items
+
+    `Parameters`
+
+    : **reverse** `bool`
+
+        :   if set, the returned stream will be in reverse order.
+
+    `return`
+
+    :   key, value Data *generator*
+
+    !!! tip "Technical details"
+
+        this `items` method do an in-order traversal. 
+
+
+    ### range
+
+    `Parameters`
+
+    : **key_low** `see Data types`
+
+    : **key_high** `see Data types`
+
+    : **reverse** `bool`
+
+    `return`
+
+    :   key, value Data *generator*
+
+    do a range query.
+
+    !!! note
+
+        this operation is very efficient thanks to the btree structure.
+
 
 
