@@ -161,7 +161,34 @@
 
         This operation only replaces the old value pointer with the new value pointer. quick recap: Data object holds the pointer.
     
+    ### vacuum
 
+    `return`
 
+    : *int* - the freed file size in bytes
+
+    do vacuum to the database file, the freed file size will be returned.
+
+    !!! note "Benefit"
+
+        the only benefit of calling this `vacuum` method is your freed disk space if possible
+
+    !!! tip "Technical details"
+
+        after this operation, the database file should be vacuumed, that is to say, the un-used space will be freed.
+        recap: `update` and `delete` will make un-used space.
+
+        The procedure as follows:
+
+        1. make a new empty file
+        2. init the file as database
+        3. traverse current opened database while moving any valid data to the new database file
+        4. replace the old database with the new one
+   
+    !!! warning
+
+        since this operation makes copy, please only do when it's really really needed.
+    
+    
 
     
