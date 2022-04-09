@@ -568,15 +568,15 @@ class VirtualBNode:
             # 2. .search('a')
 
         return value
-
-    def items(self, reversed=False):
+    
+    def items(self, reverse=False):
         # items method acts just like dict.items do
         # , yield list of key-value pairs (all Data typed)
 
         # technical details:
         # this method will do an in-order traversal on self.
 
-        if reversed:
+        if reverse:
             def do(x): return list(reversed(x))  # mirrored
         else:
             def do(x): return x  # nothing
@@ -612,13 +612,13 @@ class VirtualBNode:
                 children,
             ):
                 # has child, do recursive call.
-                yield from child.items(reversed)
+                yield from child.items(reverse)
 
                 # same as is_leaf if branch
                 yield key, value
 
             # has child, do recursive call.
-            yield from children[-1].items(reversed)
+            yield from children[-1].items(reverse)
 
     def range(
         self,
@@ -649,6 +649,7 @@ class VirtualBNode:
             yield key, value
 
     def inorder_from(self, idx):
+        
 
         for idx in range(
             idx,
