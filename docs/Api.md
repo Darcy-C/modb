@@ -29,7 +29,6 @@
     get the root node of the database.
 
 
-
     ### close
 
     freeze the root node then release the file object. This method must be called in the end.
