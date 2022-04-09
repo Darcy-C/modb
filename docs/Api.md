@@ -95,3 +95,10 @@
 
     this is a helper method to search the key recursively.
 
+    !!! note
+
+        * since this database implementation support nested node, which is just like json in binary format. the hierarchy can be created by using `create` method on node.
+    
+        * if subnode (subtree) is found, return that subtree (Data), so you need to call `get` first then you can use `create` / `insert` etc. just like you do on the root `node` object. quick recap: modb.low.VirtualBNode is the key to my database implementation.
+
+

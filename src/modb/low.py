@@ -536,10 +536,9 @@ class VirtualBNode:
         # note if subtree is found, return that subtree
         # (Data), so you need to .get() first then
         #  you can use .create / .insert etc. just
-        # like you do on the database object.
+        # like you do on the root `node` object.
         # quick recap: VirtualBNode is the key
         # to my database implementation,
-        # just like a database on its own.
 
         # init
         value = self
