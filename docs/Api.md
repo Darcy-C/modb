@@ -287,6 +287,6 @@
 
     !!! tip
 
-        This method implementation is really simple, you can learn and create your own pretty function to match your own purposes.
+        This method implementation is really simple, you can learn and create your own pretty function to fit your own needs.
 
 
