@@ -276,4 +276,16 @@
         this method involves disk-IO operations, call it when it's really needed.
 
 
-    
+    ### pretty
+
+    `return`
+
+    : *str* - the formatted string
+
+    pretty the tree recursively, return the formatted string which you can print.
+
+    !!! tip
+
+        This method implementation is really simple, you can learn and create your own pretty function to match your own purposes.
+
+
