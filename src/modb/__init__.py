@@ -13,3 +13,5 @@ note, modb stands for My Own DataBase."""
 # import common name for user convenience
 from modb.high import Database
 from modb.low import Data
+from modb.low import VirtualBNode
+
