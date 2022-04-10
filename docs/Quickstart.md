@@ -2,10 +2,9 @@
 
 Most users choose to simply install from pypi.
 ```
-pip install modb
+pip install modb-py
 ```
-!!! note
-    I am not uploading it yet, you can do that in near future.
+
 
 ## Import
 
