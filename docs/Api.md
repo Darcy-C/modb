@@ -74,6 +74,7 @@
 
 
 ## *class* **modb.low.VirtualBNode**
+> Alias: modb.VirtualBNode
 
 `Methods`
 
