@@ -1,14 +1,18 @@
 import setuptools
 
+with open('./README.md', mode='r') as f:
+    long_description = f.read()
+
+
 setuptools.setup(
-    name="modb",
-    version="0.0.1",
-    author="darcy",
+    name="modb-py",
+    version="0.2",
+    author="Darcy-C",
     # author_email="",
     description="modb, on-disk-database, the replacement for open. no third party dependency, using btree internally.",
-    # long_description=long_description,
-    # long_description_content_type="text/markdown",
-    # url="https://github.com/pypa/sampleproject",
+    long_description=long_description,
+    long_description_content_type="text/markdown",
+    url="https://github.com/Darcy-C/modb",
     # project_urls={
     #     "Bug Tracker": "https://github.com/pypa/sampleproject/issues",
     # },
