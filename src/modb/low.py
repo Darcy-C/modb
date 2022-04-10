@@ -844,6 +844,25 @@ class VirtualBNode:
         self._freeze()
         logger.info('end freezing')
 
+    def pretty(self, level=0):
+        # pretty the tree recursively.
+        # return formatted str.
+        
+        indent = ' |  ' * level
+        result = ''
+
+        for key, value in self.items():
+            k = key.get()
+            v = value.get()
+            
+            if type(v) is VirtualBNode:
+                result += f'{indent}{k!r}:\n'
+                result += v.pretty(level+1)
+            else:
+                result += f'{indent}{k!r}: {v!r}\n'
+        
+        return result
+
     # private method as follows
 
     def _range(
