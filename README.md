@@ -1,6 +1,6 @@
 ![modbgithub](./docs/images/modb.png)
 
- modb is still in beta.
+> modb is still in beta.
 
 # Welcome to modb
 
