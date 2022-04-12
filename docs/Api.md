@@ -290,3 +290,14 @@
         This method implementation is really simple, you can learn and create your own pretty function to fit your own needs.
 
 
+    ### __contains__
+
+    `return`
+
+    : *bool* - whether the searched key exists
+
+    ```python title="Sample code"
+    "hello" in node
+    # -> True
+    ```
+    
