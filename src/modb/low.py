@@ -847,21 +847,29 @@ class VirtualBNode:
     def pretty(self, level=0):
         # pretty the tree recursively.
         # return formatted str.
-        
+
         indent = ' |  ' * level
         result = ''
 
         for key, value in self.items():
             k = key.get()
             v = value.get()
-            
+
             if type(v) is VirtualBNode:
                 result += f'{indent}{k!r}:\n'
                 result += v.pretty(level+1)
             else:
                 result += f'{indent}{k!r}: {v!r}\n'
-        
+
         return result
+
+    def __contains__(self, key):
+        try:
+            self.search(key)
+        except error.KeyNotFound:
+            return False
+        else:
+            return True
 
     # private method as follows
 
