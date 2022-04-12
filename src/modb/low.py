@@ -279,34 +279,22 @@ class Data:
         # we're using __new__ to cache the Data object
         # itself. this will avoid the possible duplicating
         # of the same data in your RAM.
-        
+
         # intuitive example:
 
         # a = Data(123)
         # b = Data(123)
-        # 
+        #
         # assert a is b
 
         # keyword `is` check if two objects is totally same.
-        
+
         try:
             # try to directly return the cached (old) one
             return Data.ref[p.n, f]
         except KeyError:
             # just using default behaviour
             return super().__new__(cls)
-
-    # deprecated.
-    def get_cached(self):
-        if self.cached is not None:
-            return self.cached
-
-        # ----------------------------
-        data = self.get()
-        # ----------------------------
-
-        self.cached = data
-        return data
 
     def get(self, using_cache=False):
         # this method get real data from disk
