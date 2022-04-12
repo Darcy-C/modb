@@ -7,6 +7,7 @@ import os
 import io
 import logging
 from datetime import datetime
+from weakref import WeakValueDictionary
 
 # 3rd imports
 # for my own testing purposes
@@ -247,6 +248,8 @@ class Data:
     # make sure the cached value data is carefully selected in order to take
     # full advantage of your RAM.
 
+    ref = WeakValueDictionary()
+
     def __init__(
         self,
         p: Pointer,
@@ -263,6 +266,35 @@ class Data:
         # and type-checked(if loaded data is VirtualBNode
         # , then set this marker True).
         self.is_tree = False
+
+        # do a cache on itself, check __new__ for more information
+        Data.ref[p.n, f] = self
+
+    def __new__(
+        cls,
+        p: Pointer,
+        f,
+        cached=None,
+    ):
+        # we're using __new__ to cache the Data object
+        # itself. this will avoid the possible duplicating
+        # of the same data in your RAM.
+        
+        # intuitive example:
+
+        # a = Data(123)
+        # b = Data(123)
+        # 
+        # assert a is b
+
+        # keyword `is` check if two objects is totally same.
+        
+        try:
+            # try to directly return the cached (old) one
+            return Data.ref[p.n, f]
+        except KeyError:
+            # just using default behaviour
+            return super().__new__(cls)
 
     # deprecated.
     def get_cached(self):
