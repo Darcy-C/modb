@@ -1,5 +1,7 @@
 ![modbgithub](./docs/images/modb.png)
 
+ modb is still in beta.
+
 # Welcome to modb
 
 `modb` is a lightweight and fast Database library written in pure python.
