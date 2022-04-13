@@ -501,6 +501,8 @@ class VirtualBNode:
         # inserted key to somewhere-else, (actually `rename` and
         # `move` are the same thing, I'll explain that deeply in
         # the docs).
+        
+        # from 2022y 4m 13d on, key can be Data-typed as well.
 
         # note for myself,
         # .write_data will do a f-seek-end operation
@@ -508,7 +510,10 @@ class VirtualBNode:
         # , maybe add bulk-insert or something like
         # that in the future.
 
-        new_key_p = self.write_data(key)
+        if type(key) is Data:
+            new_key_p = key_p = key.p.n
+        else:
+            new_key_p = self.write_data(key)
 
         if type(value) is Data:
             # explained above.
