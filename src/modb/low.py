@@ -5,7 +5,6 @@ import bisect
 import mmap
 import os
 import io
-import logging
 from datetime import datetime
 from weakref import WeakValueDictionary
 
