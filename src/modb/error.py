@@ -11,3 +11,8 @@ class DuplicateKeyFound(Exception):
     # (racap again, create is a special insert
     # in my database implementation)
     pass
+
+class ArrayIndexOutOfRange(Exception):
+    # raised by Array.access method
+    
+    pass

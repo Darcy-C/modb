@@ -7,16 +7,17 @@ import os
 import io
 from datetime import datetime
 from weakref import WeakValueDictionary
+import math
 
 # 3rd imports
 # for my own testing purposes
 # from tqdm import tqdm
 
 # local imports
-from modb import utils
 from modb import error
 from modb.format import *
 from modb.log import logger
+from modb.util import *
 
 
 # note, in this source code, when I say `position` or `pointer`, they are
@@ -91,6 +92,18 @@ from modb.log import logger
 # (type-code 0 means String in my spec)
 
 
+def write_data(f, data):
+    # write data(key or value) to the disk
+    # , then return the start position of that data
+
+    f_seek_end(f)
+    # ---------------------------------
+    blob_p = Types.dump(data, f)
+    # ---------------------------------
+
+    return blob_p
+
+
 class Types:
     # this class load and dump every typed value
     # , plus tppe conversion between my own types
@@ -135,15 +148,14 @@ class Types:
         Empty,  # 3
         Boolean,  # 4
         Bytes,  # 5
+        Array,  # 6
     ]
-    # note for myself,
-    # types that will be added in the future:
-    # Array
 
     @classmethod
     def load(cls, f):
         code = U8.load(f).n
         type_ = cls.types[code]
+        start_p = f.tell()
         obj = type_.load(f)
 
         # convert my format type to python type
@@ -172,6 +184,11 @@ class Types:
             result = obj.value
         elif type_ is Bytes:
             result = obj.b
+        elif type_ is Array:
+            result = VirtualArray(
+                f=f,
+                array_p=start_p,
+            )
         else:
             # this else-branch will never be called.
             pass
@@ -225,12 +242,47 @@ class Types:
             obj = Boolean(data)
         elif type_ is bytes:
             obj = Bytes(data)
+        elif type_ is list:
+            length = len(data)
+            power = math.ceil(
+                math.log(length, 2)
+            )
+
+            ptrs = [
+                Pointer(
+                    write_data(
+                        f,
+                        el
+                    )
+                )
+                for el in data
+            ]
+            p0 = Pointer(0)
+
+            ptrs = fill(
+                ptrs,
+                max_array_length(power),
+                p0,
+            )
+
+            start_p = f.tell()
+            for i in ptrs:
+                i.dump(f)
+
+            obj = Array(
+                power=U8(power),
+                length=U32(length),
+                start=Pointer(start_p),
+            )
+
         else:
             raise RuntimeError("Unsupported type", type_)
 
         code = cls.types.index(type(obj))
+        data_p = f.tell()
         U8(code).dump(f)
         obj.dump(f)
+        return data_p
 
 
 class Data:
@@ -266,6 +318,8 @@ class Data:
         # , then set this marker True).
         self.is_tree = False
 
+        self.is_array = False
+
         # do a cache on itself, check __new__ for more information
         Data.ref[p.n, f] = self
 
@@ -299,7 +353,7 @@ class Data:
         # this method get real data from disk
         # most of the time, you don't need to use cache.
 
-        if self.is_tree:
+        if self.is_tree or self.is_array:
             # tree type must use cache
             # reason 1:
             # tree type will return VirtualBNode
@@ -320,6 +374,10 @@ class Data:
             # your RAM for the sake of performance, then the
             # tree on your disk will not be touched until
             # .freeze is called.)
+
+            # version 2022y 4m 17d and note:
+            # array must use cache too.
+
             using_cache = True
 
         if all([
@@ -338,12 +396,18 @@ class Data:
 
         # ----------------------------
 
-        is_tree = type(data) is VirtualBNode
+        type_data = type(data)
+        is_tree = type_data is VirtualBNode
+        is_array = type_data is VirtualArray
+
         if is_tree:
             self.is_tree = True
+        if is_array:
+            self.is_array = True
 
         if (
             is_tree
+            or is_array
             or using_cache
         ):
             self.cached = data
@@ -404,6 +468,217 @@ class MyIO:
 
     def close(self):
         self.f.close()
+
+
+class VirtualArray:
+
+    def __init__(
+        self,
+        f: MyIO,
+        array_p: int,
+    ):
+        self.f = f
+        self.array_p = array_p
+
+        # the 'head' part and will be 'unpacked' later on.
+        self.array: Array = self.init_array(
+            array_p=self.array_p,
+        )
+        # note, Array only holds power, length and start_pointer
+        
+        # .power and .max_length is used internally
+        self.power: int = self.array.power.n
+        self.max_length: int = max_array_length(self.power)
+
+        # .length holds the current lenght of the array
+        self.length: int = self.array.length.n
+        # note, this .length property can be used by user
+        # to iterate over the array.
+
+        # the 'body' part of array
+        self.start_p: int = self.array.start.n
+
+        # container holds NoneType or Data Type
+        # , only new added or updated elements
+        # will be Data Type for now.
+        self.container = [None] * self.length
+
+        # this flag will be set if current .max_length
+        # can not fit all the elements inside.
+        self.new = False
+
+    # public methods as follows
+
+    def access(self, idx):
+        # access the given index of the array
+        # just like `arr[idx]` in python
+
+        # if the targeted index is out of bounds
+        # raise the error.
+        if idx > self.length - 1:
+            raise error.ArrayIndexOutOfRange(
+                f'requested_idx: {idx}, length: {self.length}'
+            )
+        
+        # if the targeted index holds the new added
+        # or updated element, return it directly.
+        elif self.container[idx] is not None:
+            return self.container[idx]
+
+        # or it's located on the disk.
+        # we access it on the fly
+        else:
+            # first get the pointer of pointer which points
+            # to the actual value data
+            el_p_p = self.get_p_by_idx(idx)
+
+            self.f.seek(el_p_p)
+            
+            el = Data(
+                # load the pointer which points to the
+                # actual value data like mentioned above
+                p=Pointer.load(self.f),
+                f=self.f,
+            )
+
+            # return el (Data) directly
+            # since Data.get will do the real `read-then-parse` job
+            return el
+
+    def append(self, value):
+        # append a new element to the end of the array
+        # just like `arr.append` method in python
+        
+        value_p = write_data(self.f, value)
+
+        self.container.append(
+            Data(
+                Pointer(value_p),
+                self.f,
+            )
+        )
+        self.length += 1
+
+        # do check
+        if self.length > self.max_length:
+            self.reoccupy()
+
+    def set(self, idx, value):
+        # change the value of the given idx.
+        # just like `arr[idx] = value` in python
+
+        # the new written value data (Data Type)
+        # will be returned for possible future use.
+
+        value_p = write_data(self.f, value)
+
+        value_data = Data(
+            Pointer(value_p),
+            self.f
+        )
+
+        self.container[idx] = value_data
+
+        return value_data
+
+    # private methods as follows
+
+    def init_array(self, array_p):
+        self.f.seek(array_p)
+        return Array.load(self.f)
+
+    def get_p_by_idx(self, idx):
+        # return a pointer int which point to the 
+        # another pointer which points to the real data
+        
+        # note for myself, so actually the another 
+        # Pointer.load if needed, go and check .access
+        # for more information.
+        
+        p = self.start_p + idx * Pointer.length
+        return p
+
+    def reoccupy(self):
+        # do reoccupy the space.
+        # resize the container of current array.
+        
+        # note, actually, this reoccupy is virtual
+        # the one of the keys is that .new is set
+        # then the new space will be created in
+        # the .freeze process.
+        
+        old_power = self.power
+        new_power = old_power + 1
+
+        new_max_length = max_array_length(new_power)
+
+        self.power = new_power
+        self.max_length = new_max_length
+
+        # indicate new space should be used instead.
+        self.new = True
+
+    def freeze(self):
+        # freeze the array just like VirtualBNode.
+        # note, since VirtualBNode is the core of 
+        # the database implementation, the tree is 
+        # the core, the Array type is just part of 
+        # the whole tree. so it's natural to know 
+        # that this VirtualArray.freeze will be called
+        # automatically by VirtualBNode.freeze.
+        
+        # new space should be created
+        # , the pointers should be transfered.
+        if self.new is True:
+            # new
+            ptrs = []
+            for idx, el in enumerate(self.container):
+                if el is None:
+                    ptr = self.access(idx).p
+                    ptrs.append(ptr)
+                else:
+                    ptrs.append(el.p)
+
+            p0 = Pointer(0)
+            ptrs = fill(
+                ptrs,
+                max_array_length(self.power),
+                p0,
+            )
+
+            start_p = new_start_p = f_seek_end(self.f)
+            for i in ptrs:
+                i.dump(self.f)
+
+            self.start_p = start_p
+
+        else:
+            # else branch, no new space should be allocated
+            # partially change needs to be done.
+            
+            for idx, el in enumerate(self.container):
+                if el is None:
+                    # no change needed.
+                    pass
+                else:
+                    p = self.get_p_by_idx(idx)
+                    self.f.seek(p)
+                    el.p.dump(self.f)
+
+            start_p = self.start_p
+
+        # at least `length` may change after you do append.
+        obj = Array(
+            power=U8(self.power),
+            length=U32(self.length),
+            start=Pointer(start_p),
+        )
+        self.f.seek(
+            self.array_p
+        )
+        obj.dump(self.f)
+
+        self.new = False
 
 
 class VirtualBNode:
@@ -494,17 +769,17 @@ class VirtualBNode:
         # type of value can be any supported type except Tree type
         # , since Tree type value can be created by .create method.
         # OR can be a Data object, in this case, the pointed data
-        # will be used directly rather than .write_data again in
+        # will be used directly rather than write_data again in
         # order to get the pointer. this feature can be used to
         # rename the key of the already inserted data OR move the
         # inserted key to somewhere-else, (actually `rename` and
         # `move` are the same thing, I'll explain that deeply in
         # the docs).
-        
+
         # from 2022y 4m 13d on, key can be Data-typed as well.
 
         # note for myself,
-        # .write_data will do a f-seek-end operation
+        # write_data will do a f-seek-end operation
         # that will slow speed down dramatically
         # , maybe add bulk-insert or something like
         # that in the future.
@@ -512,13 +787,13 @@ class VirtualBNode:
         if type(key) is Data:
             new_key_p = key_p = key.p.n
         else:
-            new_key_p = self.write_data(key)
+            new_key_p = write_data(self.f, key)
 
         if type(value) is Data:
             # explained above.
             new_value_p = value_p = value.p.n
         else:
-            new_value_p = self.write_data(value)
+            new_value_p = write_data(self.f, value)
 
         key_data = Data(
             Pointer(new_key_p),
@@ -678,7 +953,7 @@ class VirtualBNode:
 
         node, idx = self._search(key)
         old_value_data = node.values[idx]
-        new_value_p = self.write_data(new_value)
+        new_value_p = write_data(self.f, new_value)
         value_data = Data(
             Pointer(new_value_p),
             self.f,
@@ -716,7 +991,7 @@ class VirtualBNode:
         # do a freeze first to make sure that.
         self.freeze()
 
-        before_size = self.f_seek_end()
+        before_size = f_seek_end(self.f)
 
         # - create and init a new file
 
@@ -734,7 +1009,7 @@ class VirtualBNode:
             mode='wb',
         ) as f:
             file_start_p = f.tell()
-            utils.make_header(0).dump(f)
+            make_header(0).dump(f)
             # -------------------------------
             # make a link table for _vacuum to use
             self.tmp_vacuum_link_table = {}
@@ -745,7 +1020,7 @@ class VirtualBNode:
             new_node_start_p = self._vacuum(f)
             # -------------------------------
             f.seek(file_start_p)
-            utils.make_header(new_node_start_p).dump(f)
+            make_header(new_node_start_p).dump(f)
 
             del self.tmp_vacuum_link_table
 
@@ -769,7 +1044,7 @@ class VirtualBNode:
         self.node_p = new_node_start_p
         self.access()
 
-        after_size = self.f_seek_end()
+        after_size = f_seek_end(self.f)
 
         logger.info('end vacuuming')
 
@@ -830,9 +1105,9 @@ class VirtualBNode:
         # recap again, most of the time
         # , this is for building hierarchical structure.
 
-        new_key_p = self.write_data(key)
+        new_key_p = write_data(self.f, key)
 
-        self.f_seek_end()
+        f_seek_end(self.f)
         new_value_p = Types.create_tree(self.f)
 
         key_data = Data(
@@ -1063,21 +1338,6 @@ class VirtualBNode:
 
         # keep looking till leaf node found (recursively)
         return child.find_closest_leaf_node(key)
-
-    def f_seek_end(self):
-        # note for myself: seek took time to perform too
-        return self.f.seek(0, io.SEEK_END)
-
-    def write_data(self, data):
-        # write data(key or value) to the disk
-        # , then return the start position of that data
-
-        blob_p = self.f_seek_end()
-        # ---------------------------------
-        Types.dump(data, self.f)
-        # ---------------------------------
-
-        return blob_p
 
     def _insert(self, key: Data, value: Data):
         vnode_targeted = self.find_closest_leaf_node(
@@ -1431,7 +1691,7 @@ class VirtualBNode:
         # for space re-use.
 
         if self.node_p == -1:
-            start_position = self.f_seek_end()
+            start_position = f_seek_end(self.f)
         else:
             start_position = self.f.seek(self.node_p)
 
@@ -1487,6 +1747,10 @@ class VirtualBNode:
 
                 # use ._freeze() to avoid logging
                 subtree._freeze()
+
+            if value.is_array:
+                arr: VirtualArray = value.get(using_cache=True)
+                arr.freeze()
 
         if self.is_leaf():
             start_position = self.seek_written_position()
@@ -1685,7 +1949,7 @@ class Database:
     @classmethod
     def write_initial_database_header(cls, f):
         file_start_p = f.tell()
-        utils.make_header(0).dump(f)
+        make_header(0).dump(f)
         node_start_p = f.tell()
         # empty node
         BNodeFormat(
@@ -1694,7 +1958,7 @@ class Database:
             children=[],
         ).dump(f)
         f.seek(file_start_p)
-        utils.make_header(node_start_p).dump(f)
+        make_header(node_start_p).dump(f)
 
     def init_database_file(self):
         logger.info('start init database file')

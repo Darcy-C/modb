@@ -4,9 +4,37 @@ from typing import List
 # local imports
 from modb.formatcore import *
 from modb.constant import *
+from modb.util import fill
 
 # alias
 Pointer = U64
+
+
+class Array(Base):
+    def __init__(
+        self,
+        # container size (2**power)
+        power: U8,
+        # the number of elements
+        length: U32,
+        start: Pointer,
+    ):
+        self.power = power
+        self.length = length
+        self.start = start
+
+    @classmethod
+    def load(cls, f):
+        return cls(
+            power=U8.load(f),
+            length=U32.load(f),
+            start=Pointer.load(f),
+        )
+
+    def dump(self, f):
+        self.power.dump(f)
+        self.length.dump(f)
+        self.start.dump(f)
 
 
 class Bytes(Base):
@@ -135,20 +163,14 @@ class BNodeFormat(Base):
     ):
 
         p = Pointer(0)
-        self.keys = self.fill(keys, self.capacity, p)
-        self.values = self.fill(values, self.capacity, p)
-        self.children = self.fill(children, self.order, p)
+        self.keys = fill(keys, self.capacity, p)
+        self.values = fill(values, self.capacity, p)
+        self.children = fill(children, self.order, p)
 
         # note:
         # key pointer -> data (like number or string), used to compare
         # value pointer -> data (like number or string)
         # child pointer -> BNodeFormat
-
-    def fill(self, seq, n, obj):
-        len_seq = len(seq)
-        if len_seq < n:
-            seq += [obj] * (n - len_seq)
-        return seq
 
     @classmethod
     def load(cls, f):
@@ -259,3 +281,11 @@ if __name__ == '__main__':
     )
 
     print('Done.')
+
+
+def make_header(root_node_ptr):
+    return Header(
+        signature=Signature('BTR'),
+        btree_order=U16(BNODE_ORDER),
+        root_node=Pointer(root_node_ptr),
+    )
