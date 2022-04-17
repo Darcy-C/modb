@@ -20,12 +20,12 @@ from modb.log import logger
 from modb.util import *
 
 
-# note, in this source code, when I say `position` or `pointer`, they are
-# the same thing, which is the absolute location of the data in the database
-# file. the variable name often has `_p` suffix to indicate that is a pointer
-# , which is just a int type variable. note, there IS a Pointer(or U32) class
-# , that kind of class is just a helper class for us to easily load-and-dump
-# some fixed pattern from-and-to the disk.
+# note, in this source code, when I say `position` or `pointer`, they are the
+# same thing, which is the absolute location of the data in the database file.
+# the variable name often has `_p` suffix to indicate that is a pointer , which
+# is just a int type variable. note, there IS a Pointer(or U32) class , that
+# kind of class is just a helper class for us to easily load-and-dump some fixed
+# pattern from-and-to the disk.
 
 # note, in this source code, when I say `index` or `bnode`, they most of the
 # time are the same thing, that is to say, we use btree as our index structure
@@ -105,42 +105,35 @@ def write_data(f, data):
 
 
 class Types:
-    # this class load and dump every typed value
-    # , plus tppe conversion between my own types
-    # and python types. for example, when you do
-    # insert, your passed str-type value will be
-    # converted to format.String type automatically.
+    # this class load and dump every typed value , plus tppe conversion between
+    # my own types and python types. for example, when you do insert, your
+    # passed str-type value will be converted to format.String type
+    # automatically.
 
-    # in this database implentation, value can be
-    # typed and inserted(stored), just use one byte
-    # length unsigned integer to indicate the type
-    # of the stored value. (quick recap, in BNode
-    # we store the pointer that points to the actual
-    # stored data, and the data will be parsed by
-    # this Types class), for example, if code if 1
-    # , that indicates the data read afterwards is
-    # Number-typed. so we can do the conversion,
-    # like convert Number to python float.
+    # in this database implentation, value can be typed and inserted(stored),
+    # just use one byte length unsigned integer to indicate the type of the
+    # stored value. (quick recap, in BNode we store the pointer that points to
+    # the actual stored data, and the data will be parsed by this Types class),
+    # for example, if code if 1 , that indicates the data read afterwards is
+    # Number-typed. so we can do the conversion, like convert Number to python
+    # float.
 
-    # note, Tree is a very special value type.
-    # you can store tree in tree. in this database
-    # implementation, VirtualBNode class is the place
-    # where all the magics happen. with so-called Tree
-    # type, you can store VirtualBNode in VirtualBNode
-    # this is how it works:
-    # if type code indicates the type of the value is
-    # Tree, then .load method will help you jump to
-    # that VirtualBNode using so-called node-start
-    # -position, which is stored in format.Tree
-    # this is important, the Tree data only store
-    # the pointer to the next you-searched Tree (
-    # VirtualBNode)
+    # note, Tree is a very special value type. you can store tree in tree. in
+    # this database implementation, VirtualBNode class is the place where all
+    # the magics happen. with so-called Tree type, you can store VirtualBNode in
+    # VirtualBNode this is how it works: if type code indicates the type of the
+    # value is Tree, then .load method will help you jump to that VirtualBNode
+    # using so-called node-start -position, which is stored in format.Tree this
+    # is important, the Tree data only store the pointer to the next
+    # you-searched Tree ( VirtualBNode)
 
-    # currently, we have following types supported.
-    # where Tree is very special(I remind you this
-    # again and again)
-    # note, following list acts like a type-code-table
-    # , the index is just like type-code.
+    # currently, we have following types supported. where Tree is very special(I
+    # remind you this again and again)
+
+    # note, following list acts like a type-code-table , the index is just like
+    # type-code.
+
+    # supported types (Data types)
     types = [
         String,  # 0
         Number,  # 1
@@ -150,6 +143,7 @@ class Types:
         Bytes,  # 5
         Array,  # 6
     ]
+    # note, you may go and read the docs for more information.
 
     @classmethod
     def load(cls, f):
@@ -158,17 +152,14 @@ class Types:
         start_p = f.tell()
         obj = type_.load(f)
 
-        # convert my format type to python type
-        # for convenience.
+        # convert my format type to python type for user convenience.
         if type_ is String:
             result = obj.s
         elif type_ is Number:
             result = obj.n
         elif type_ is Tree:
-            # very special. we just load it as
-            # the VirtualBNode's instance right now
-            # because Types.load is only called when
-            # value.get() is called.
+            # very special. we just load it as the VirtualBNode's instance right
+            # now because Types.load is only called when value.get() is called.
 
             root_node_p = obj.root_node.n
             vnode = VirtualBNode(
@@ -207,17 +198,15 @@ class Types:
 
     @classmethod
     def create_tree(cls, f):
-        # create tree in the current position.
-        # return the tree data position
-        # note: every data starts with code(length U8)
-        # to indicate which type of data comes afterwards.
-        # `Types.load` will scan this for proper init.
+        # create tree in the current position. return the tree data position
+
+        # note: every data starts with code(length U8) to indicate which type of
+        # data comes afterwards. `Types.load` will scan this for proper init.
 
         root_node_p = f.tell()
-        # create an empty tree(of course, BNodeFormat),
-        # the process of building the tree is very
-        # close to the original tree of the database
-        # when you first init the database file.
+        # create an empty tree(of course, BNodeFormat), the process of building
+        # the tree is very close to the original tree of the database when you
+        # first init the database file.
         BNodeFormat(
             keys=[],
             values=[],
@@ -288,12 +277,13 @@ class Types:
 class Data:
     # using .get() to access the real data stored on disk or RAM.
 
-    # this class will be used to refer to the data on the disk using pointer
-    # in my btree implentation, the inserted key data will be cached directly.
-    # and the inserted value data can be theoretically cached too, but since
-    # cache uses RAM to boost speed, while most value data is quite big, so
-    # RAM used only to cache the index (the bnode structure and the key data
-    # for comparison) will be more practical.
+    # this class will be used to refer to the data on the disk using pointer in
+    # my btree implentation, the inserted key data will be cached directly. and
+    # the inserted value data can be theoretically cached too, but since cache
+    # uses RAM to boost speed, while most value data is quite big, so RAM used
+    # only to cache the index (the bnode structure and the key data for
+    # comparison) will be more practical.
+
     # note, that does not mean value data is not recommended to cache, you can
     # cache your frequently accessed value in your logic code. you just need to
     # make sure the cached value data is carefully selected in order to take
@@ -311,14 +301,18 @@ class Data:
         self.f = f
         self.cached = cached
 
-        # if this marker is set, .freeze will freeze data
-        # (type: VirtualBNode) too.
-        # this marker will be set after data is first loaded
-        # and type-checked(if loaded data is VirtualBNode
-        # , then set this marker True).
+        # if this marker is set, .freeze will freeze data (type: VirtualBNode)
+        # too.
+
+        # this marker will be set after data is first loaded and type-checked(if
+        # loaded data is VirtualBNode , then set this marker True).
         self.is_tree = False
 
+        # if this marker is set, the VirtualArray-typed value will be get and be
+        # freezed too (using VirtualArray.freeze)
         self.is_array = False
+        # note, like the .is_tree one, this marker will be only set when calling
+        # the Data.get once.
 
         # do a cache on itself, check __new__ for more information
         Data.ref[p.n, f] = self
@@ -329,9 +323,8 @@ class Data:
         f,
         cached=None,
     ):
-        # we're using __new__ to cache the Data object
-        # itself. this will avoid the possible duplicating
-        # of the same data in your RAM.
+        # we're using __new__ to cache the Data object itself. this will avoid
+        # the possible duplicating of the same data in your RAM.
 
         # intuitive example:
 
@@ -350,33 +343,33 @@ class Data:
             return super().__new__(cls)
 
     def get(self, using_cache=False):
-        # this method get real data from disk
-        # most of the time, you don't need to use cache.
+        # this method get real data from disk most of the time, you don't need
+        # to use cache.
 
         if self.is_tree or self.is_array:
             # tree type must use cache
             # reason 1:
-            # tree type will return VirtualBNode
-            # , just another index, index should be cached
-            # for the reason of performance(already explained).
-            # reason 2:
-            # read the data again and again from the disk is
-            # not even possible if reason 1 is true.
-            # since this .get method will read the actual
-            # data from .p position, and the real data(tree)
-            # won't be present on disk until you call .freeze
-            # in another expression:
-            # before you call .freeze, the data at the .p
-            # position will always be the old one
-            # (for example, if you .create tree, you will get
-            # the empty Tree on your disk, after you create
-            # that, you should always manipulate instance in
-            # your RAM for the sake of performance, then the
-            # tree on your disk will not be touched until
-            # .freeze is called.)
 
-            # version 2022y 4m 17d and note:
-            # array must use cache too.
+            # tree type will return VirtualBNode , just another index, index
+            # should be cached for the reason of performance(already explained).
+
+            # reason 2:
+
+            # read the data again and again from the disk is not even possible
+            # if reason 1 is true. since this .get method will read the actual
+            # data from .p position, and the real data(tree) won't be present on
+            # disk until you call .freeze
+
+            # in another expression:
+
+            # before you call .freeze, the data at the .p position will always
+            # be the old one (for example, if you .create tree, you will get the
+            # empty Tree on your disk, after you create that, you should always
+            # manipulate instance in your RAM for the sake of performance, then
+            # the tree on your disk will not be touched until .freeze is
+            # called.)
+
+            # version 2022y 4m 17d and note: array must use cache too.
 
             using_cache = True
 
@@ -415,8 +408,8 @@ class Data:
         return data
 
     def __lt__(self, other):
-        # compare function used by btree
-        # that's the key to the btree implementation.
+        # compare function used by btree. that's the key to the btree
+        # implementation.
 
         if type(other) in [str, int, float, bytes]:
             return self.get(using_cache=True) < other
@@ -425,15 +418,13 @@ class Data:
 
 
 class MyIO:
-    # this MyIO class makes change-file-object-on-the-fly
-    # possible, just using `change_f` method to change
-    # the current using file object.
+    # this MyIO class makes change-file-object-on-the-fly possible, just using
+    # `change_f` method to change the current using file object.
 
-    # note, in `modb`, MyIO will be used for the hot-reloading
-    # of the database file, go and check `VirtualBNode.vacuum`
-    # which take advantage of `MyIO.change_f`, since `vacuum`
-    # method will create a new copy of current database file
-    # , then a switch from old `f` to new `f` should be done.
+    # note, in `modb`, MyIO will be used for the hot-reloading of the database
+    # file, go and check `VirtualBNode.vacuum` which take advantage of
+    # `MyIO.change_f`, since `vacuum` method will create a new copy of current
+    # database file , then a switch from old `f` to new `f` should be done.
 
     def __init__(self, f):
         # real one
@@ -444,9 +435,8 @@ class MyIO:
         return self.f.name
 
     def change_f(self, new_f):
-        # this method will be used
-        # by VirtualBNode.vacuum method
-        # to change the file-used on the fly.
+        # this method will be used by VirtualBNode.vacuum method to change the
+        # file-used on the fly.
 
         # make sure old one will be closed
         self.f.close()
@@ -485,70 +475,66 @@ class VirtualArray:
             array_p=self.array_p,
         )
         # note, Array only holds power, length and start_pointer
-        
+
         # .power and .max_length is used internally
         self.power: int = self.array.power.n
         self.max_length: int = max_array_length(self.power)
 
         # .length holds the current lenght of the array
         self.length: int = self.array.length.n
-        # note, this .length property can be used by user
-        # to iterate over the array.
+        # note, this .length property can be used by user to iterate over the
+        # array.
 
         # the 'body' part of array
         self.start_p: int = self.array.start.n
 
-        # container holds NoneType or Data Type
-        # , only new added or updated elements
-        # will be Data Type for now.
+        # container holds NoneType or Data Type , only new added or updated
+        # elements will be Data Type for now.
         self.container = [None] * self.length
 
-        # this flag will be set if current .max_length
-        # can not fit all the elements inside.
+        # this flag will be set if current .max_length can not fit all the
+        # elements inside.
         self.new = False
 
     # public methods as follows
 
     def access(self, idx):
-        # access the given index of the array
-        # just like `arr[idx]` in python
+        # access the given index of the array just like `arr[idx]` in python
 
-        # if the targeted index is out of bounds
-        # raise the error.
+        # if the targeted index is out of bounds, raise the error.
         if idx > self.length - 1:
             raise error.ArrayIndexOutOfRange(
                 f'requested_idx: {idx}, length: {self.length}'
             )
-        
-        # if the targeted index holds the new added
-        # or updated element, return it directly.
+
+        # if the targeted index holds the new added or updated element, return
+        # it directly.
         elif self.container[idx] is not None:
             return self.container[idx]
 
-        # or it's located on the disk.
-        # we access it on the fly
+        # or it's located on the disk. we access it on the fly
         else:
-            # first get the pointer of pointer which points
-            # to the actual value data
+            # first get the pointer of pointer which points to the actual value
+            # data
             el_p_p = self.get_p_by_idx(idx)
 
             self.f.seek(el_p_p)
-            
+
             el = Data(
-                # load the pointer which points to the
-                # actual value data like mentioned above
+                # load the pointer which points to the actual value data like
+                # mentioned above
                 p=Pointer.load(self.f),
                 f=self.f,
             )
 
-            # return el (Data) directly
-            # since Data.get will do the real `read-then-parse` job
+            # return el (Data) directly since Data.get will do the real
+            # `read-then-parse` job
             return el
 
     def append(self, value):
-        # append a new element to the end of the array
-        # just like `arr.append` method in python
-        
+        # append a new element to the end of the array just like `arr.append`
+        # method in python
+
         value_p = write_data(self.f, value)
 
         self.container.append(
@@ -564,11 +550,11 @@ class VirtualArray:
             self.reoccupy()
 
     def set(self, idx, value):
-        # change the value of the given idx.
-        # just like `arr[idx] = value` in python
+        # change the value of the given idx. just like `arr[idx] = value` in
+        # python
 
-        # the new written value data (Data Type)
-        # will be returned for possible future use.
+        # the new written value data (Data Type) will be returned for possible
+        # future use.
 
         value_p = write_data(self.f, value)
 
@@ -588,25 +574,21 @@ class VirtualArray:
         return Array.load(self.f)
 
     def get_p_by_idx(self, idx):
-        # return a pointer int which point to the 
-        # another pointer which points to the real data
-        
-        # note for myself, so actually the another 
-        # Pointer.load if needed, go and check .access
-        # for more information.
-        
+        # return a pointer int which point to the another pointer which points
+        # to the real data
+
+        # note for myself, so actually the another `Pointer.load` if needed, go
+        # and check .access for more information.
+
         p = self.start_p + idx * Pointer.length
         return p
 
     def reoccupy(self):
-        # do reoccupy the space.
-        # resize the container of current array.
-        
-        # note, actually, this reoccupy is virtual
-        # the one of the keys is that .new is set
-        # then the new space will be created in
-        # the .freeze process.
-        
+        # do reoccupy the space, resize the container of current array.
+
+        # note, actually, this reoccupy is virtual the one of the keys is that
+        # .new is set then the new space will be created in the .freeze process.
+
         old_power = self.power
         new_power = old_power + 1
 
@@ -620,15 +602,13 @@ class VirtualArray:
 
     def freeze(self):
         # freeze the array just like VirtualBNode.
-        # note, since VirtualBNode is the core of 
-        # the database implementation, the tree is 
-        # the core, the Array type is just part of 
-        # the whole tree. so it's natural to know 
-        # that this VirtualArray.freeze will be called
+
+        # note, since VirtualBNode is the core of the database implementation,
+        # the tree is the core, the Array type is just part of the whole tree.
+        # so it's natural to know that this VirtualArray.freeze will be called
         # automatically by VirtualBNode.freeze.
-        
-        # new space should be created
-        # , the pointers should be transfered.
+
+        # new space should be created, the pointers should be transfered.
         if self.new is True:
             # new
             ptrs = []
@@ -653,9 +633,9 @@ class VirtualArray:
             self.start_p = start_p
 
         else:
-            # else branch, no new space should be allocated
-            # partially change needs to be done.
-            
+            # else branch, no new space should be allocated partially change
+            # needs to be done.
+
             for idx, el in enumerate(self.container):
                 if el is None:
                     # no change needed.
@@ -682,37 +662,38 @@ class VirtualArray:
 
 
 class VirtualBNode:
-    # the class where all the magic happens in my implementation
+    # the class is where all the magic happens in my implementation
 
     # frequently asked question:
     # Q: what is the relation between BNode and BTree?
-    # A: BNode and Btree in this context are almost the same thing
-    # , you see, a BNode can have its own children, so have everything
-    # , but if you consider it overall, it is the BTree now.
-    # now you see why there is BNode and Btree in the same time.
-    #
+
+    # A: BNode and Btree in this context are almost the same thing , you see, a
+    # BNode can have its own children, so have everything , but if you consider
+    # it overall, it is the BTree now. now you see why there is BNode and Btree
+    # in the same time.
+
     # Q: and what about VirtualBNode.
-    # A: in aspect of behaviour, they are the same
-    # , but VirtualBNode keeps the balance in the data transfer
-    # between the hard drive(slow speed) and RAM(fast speed).
-    # in a sentence, just a cache that cache the used node.
-    # important note: the thing that truly makes process faster
-    # is that all the construction process(splitting etc.) of
-    # btree is happening in RAM. not in hard drive.
-    #
-    # Q: if the real btree construction process is happening
-    # in the RAM, then when the tree is moved(written) back to the disk
-    # for future access.
-    # A: when .freeze is called. .freeze will be called automatically
-    # when you close the database file. .freeze will do a relatively
-    # smart check to avoid unnecessary f.write calls.
-    # about technical details: .freeze do a so-called post-traverse.
-    # that is children then parent traverse routine,
-    # children will be traversed first, then we'll get the children's
-    # pointers, and then passed to parent as parent's children.
-    # you can also check the rough layout of this on-disk-database
-    # file format.(in this source file on top)
-    #
+
+    # A: in aspect of behaviour, they are the same , but VirtualBNode keeps the
+    # balance in the data transfer between the hard drive(slow speed) and
+    # RAM(fast speed). in a sentence, just a cache that cache the used node.
+
+    # important note: the thing that truly makes process faster is that all the
+    # construction process(splitting etc.) of btree is happening in RAM. not in
+    # hard drive.
+
+    # Q: if the real btree construction process is happening in the RAM, then
+    # when the tree is moved(written) back to the disk for future access.
+
+    # A: when .freeze is called. .freeze will be called automatically when you
+    # close the database file. .freeze will do a relatively smart check to avoid
+    # unnecessary f.write calls.
+
+    # about technical details: .freeze do a so-called post-traverse. that is
+    # children then parent traverse routine, children will be traversed first,
+    # then we'll get the children's pointers, and then passed to parent as
+    # parent's children. you can also check the rough layout of this
+    # on-disk-database file format.(in this source file on top)
 
     def __init__(
         self,
@@ -722,12 +703,10 @@ class VirtualBNode:
     ):
         self.f = f
 
-        # indicate physical position,
-        # -1 stands for new physical node
+        # indicate physical position, -1 stands for new physical node
         self.node_p = node_p
 
-        # another VirtualBNode
-        # or None if no parent node
+        # another VirtualBNode or None if no parent node
         self.parent = parent
         # quick check
         assert type(self.parent) in [
@@ -740,16 +719,15 @@ class VirtualBNode:
         self.values = []
         self.children = []
 
-        # this marker make .freeze performance better
-        # , since .freeze can skip un-modified node confidently
+        # this marker make .freeze performance better , since .freeze can skip
+        # un-modified node confidently
         self.modified = False
 
         # indicate whether self is accessed (using .access)
         self.accessed = False
 
-        # new node must have these properties
-        # since they are not on disk and they must
-        # be written to disk when .freeze is called.
+        # new node must have these properties since they are not on disk and
+        # they must be written to disk when .freeze is called.
         if self.node_p == -1:
             self.modified = True
             self.accessed = True
@@ -757,31 +735,27 @@ class VirtualBNode:
     # public method as follows
 
     def insert(self, key, value):
-        # insert the key-value pair
-        # , return Data object of the inserted value.
+        # insert the key-value pair, return Data object of the inserted value.
+        
+        # when inserting, if the key already exists ,
+        # modb.error.DuplicateKeyFound will be raised.
 
-        # , the inserted pair can be searched using .search method.
-        # when inserting, if the key already exists
-        # , modb.error.DuplicateKeyFound will be raised.
+        # note, the inserted pair can be searched using .search method.
 
         # note, the supported type of inserted data is listed in docs.
 
-        # type of value can be any supported type except Tree type
-        # , since Tree type value can be created by .create method.
-        # OR can be a Data object, in this case, the pointed data
-        # will be used directly rather than write_data again in
-        # order to get the pointer. this feature can be used to
-        # rename the key of the already inserted data OR move the
-        # inserted key to somewhere-else, (actually `rename` and
-        # `move` are the same thing, I'll explain that deeply in
-        # the docs).
+        # type of value can be any supported type except Tree type , since Tree
+        # type value can be created by .create method. OR can be a Data object,
+        # in this case, the pointed data will be used directly rather than
+        # write_data again in order to get the pointer. this feature can be used
+        # to rename the key of the already inserted data OR move the inserted
+        # key to somewhere-else, (actually `rename` and `move` are the same
+        # thing, I'll explain that deeply in the docs).
 
         # from 2022y 4m 13d on, key can be Data-typed as well.
 
-        # note for myself,
-        # write_data will do a f-seek-end operation
-        # that will slow speed down dramatically
-        # , maybe add bulk-insert or something like
+        # note for myself, write_data will do a f-seek-end operation that will
+        # slow speed down dramatically, maybe add bulk-insert or something like
         # that in the future.
 
         if type(key) is Data:
@@ -817,27 +791,24 @@ class VirtualBNode:
     def search(self, key):
         # search the key
 
-        # if key found, return Data object
-        # , you can .get() to get the actual structure(data) later
-        # , otherwise, modb.error.KeyNotFound will be raised.
+        # if key found, return Data object , you can .get() to get the actual
+        # structure(data) later , otherwise, modb.error.KeyNotFound will be
+        # raised.
 
         node, idx = self._search(key)
         return node.values[idx]
 
     def follow(self, key_path: list):
-        # this is a helper method to
-        # search the key recursively.
+        # this is a helper method to search the key recursively.
 
-        # since this database structure
-        # is just like json. the hierarchy
-        # can be created using .create method.
+        # since this database structure is just like json. the hierarchy can be
+        # created using .create method.
 
-        # note if subtree is found, return that subtree
-        # (Data), so you need to .get() first then
-        #  you can use .create / .insert etc. just
-        # like you do on the root `node` object.
-        # quick recap: VirtualBNode is the key
-        # to my database implementation,
+        # note if subtree is found, return that subtree (Data), so you need to
+        # .get() first then you can use .create / .insert etc. just like you do
+        #  on the root `node` object.
+        
+        # quick recap: VirtualBNode is the key to my database implementation.
 
         # init
         value = self
@@ -846,20 +817,19 @@ class VirtualBNode:
         for idx, key in enumerate(key_path):
             value = value.search(key)
 
-            # following .get() is important
-            # , every data value should be
-            # .get() prior to access the real data
-            # , tree-typed data is no exception.
+            # following .get() is important , every data value should be .get()
+            # prior to access the real data , tree-typed data is no exception.
 
-            # for consistency, the last key will not be
-            # .get(), we return Data to the user directly.
+            # for consistency, the last key will not be .get(), we return Data
+            # to the user directly.
             if idx != len(key_path) - 1:
                 value = value.get()
-            # the idea is that the last key's type
-            # is not predictable.
-            # but, when you .follow(['a', 'b', 'c'])
-            # the key 'a' and key 'b' must be tree typed.
-            # so we can search the subtree recursively.
+            # the idea is that the last key's type is not predictable. but, when
+            # you .follow(['a', 'b', 'c']) the key 'a' and key 'b' must be tree-
+            # typed. so we can search the tree recursively. note, `recursive` in
+            # here means we go into the next subtree then maybe go into the next
+            # nested tree recursively.
+            
             # for example,
             # following two lines are identical.
             # 1. .follow(['a'])
@@ -868,19 +838,18 @@ class VirtualBNode:
         return value
 
     def items(self, reverse=False):
-        # items method acts just like dict.items do
-        # , yield list of key-value pairs (all Data typed)
+        # items method acts just like `dict.items` will do , yield list of
+        # key-value pairs (all Data typed)
 
-        # technical details:
-        # this method will do an in-order traversal on self.
+        # technical details: this method will do an in-order traversal on self.
 
         if reverse:
             def do(x): return list(reversed(x))  # mirrored
         else:
             def do(x): return x  # nothing
 
-        # like any other method, you should make sure that
-        # the manipulated node is accessed first.
+        # like any other method, you should make sure that the manipulated node
+        # is accessed first.
         if not self.accessed:
             self.access()
 
@@ -892,10 +861,9 @@ class VirtualBNode:
         # 2. yield relative root node (pair)
         # 3. traverse the most-other side
 
-        # two possibilities, leaf or internal node
-        # note, following codes can shrink even further
-        # , if you use custom `zip` function.
-        # (like using fill parameter)
+        # two possibilities, leaf or internal node. note, following codes can
+        # shrink even further , if you use custom `zip` function. (like using
+        # fill parameter)
         if self.is_leaf():
             for key, value in zip(
                 keys,
@@ -924,12 +892,10 @@ class VirtualBNode:
         key_high,
         reverse=False,
     ):
-        # do a range query, yield key-value pair stream
-        # this operation is very efficient thanks
-        # to btree.
+        # do a range query, yield key-value pair stream this operation is very
+        # efficient thanks to btree.
 
-        # if reverse is set, the stream will be efficiently
-        # reversed.
+        # if reverse is set, the stream will be efficiently reversed.
 
         # note, key_high will not be included in the stream.
 
@@ -941,15 +907,13 @@ class VirtualBNode:
     def update(self, key, new_value):
         # update the value of the given key.
 
-        # note, the old value will not be
-        # eraised from your disk before you do
+        # note, the old value will not be eraised from your disk before you do
         # .vacuum
 
         # technical details:
-        # replace the old value pointer
-        # with the new value pointer
-        # , then return the old value Data object
-        # (quick recap: Data object holds pointer)
+        
+        # replace the old value pointer with the new value pointer , then return
+        # the old value Data object (quick recap: Data object holds pointer)
 
         node, idx = self._search(key)
         old_value_data = node.values[idx]
@@ -966,29 +930,29 @@ class VirtualBNode:
     def vacuum(self):
         # do vacuum, the freed size will be returned.
 
-        # after this operation, the database file
-        # should be vacuumed, the un-used space will
-        # be freed.
-        # (recap, .update and .delete operation are
-        # the two that may make un-used space)
-        # note, the only benefit of doing so is your
-        # freed disk space if possible.
-        # warning, this vacuum operation is slow
-        # since it makes copy, please do this operation
-        # when it's really really needed.
+        # after this operation, the database file should be vacuumed, the
+        # un-used space will be freed.
+        
+        # (recap, .update and .delete operation are the two that may make
+        # un-used space)
+
+        # note, the only benefit of doing so is your freed disk space if
+        # possible.
+
+        # warning, this vacuum operation is slow since it makes copy, please do
+        # this operation when it's really really needed.
 
         # the procedure as follows
         # 1. make a new empty file
         # 2. init the file as database
-        # 3. traverse current database while moving
-        # any valid data to the new database file
+        # 3. traverse current database while moving any valid data to the new
+        # database file
         # 4. replace the old database
 
         logger.info('start vacuuming')
 
-        # for correct vacuuming, every modification needs to
-        # be already written to the disk, so we need to
-        # do a freeze first to make sure that.
+        # for correct vacuuming, every modification needs to be already written
+        # to the disk, so we need to do a freeze first to make sure that.
         self.freeze()
 
         before_size = f_seek_end(self.f)
@@ -1013,10 +977,9 @@ class VirtualBNode:
             # -------------------------------
             # make a link table for _vacuum to use
             self.tmp_vacuum_link_table = {}
-            # note about link
-            # you can insert two keys with the same data pointer
-            # use tmp_vacuum_link_table to avoid duplicates when
-            # copying the data
+            # note about link, you can insert two keys with the same data
+            # pointer. I use tmp_vacuum_link_table to avoid duplicates when copying
+            # the data
             new_node_start_p = self._vacuum(f)
             # -------------------------------
             f.seek(file_start_p)
@@ -1036,8 +999,7 @@ class VirtualBNode:
             filename,
             mode='r+b',
         )
-        # change the file-used on the fly
-        # thanks to the MyIO class
+        # change the file-used on the fly thanks to the MyIO class
         self.f.change_f(new_f)
 
         # important: re-start the vnode(self) too
@@ -1049,15 +1011,14 @@ class VirtualBNode:
         logger.info('end vacuuming')
 
         freed_size = before_size - after_size
-        # if following assertion fails
-        # , file will be broken in a high chance.
+        # if following assertion fails , file will be broken in a high chance.
         assert freed_size >= 0, "weird thing happened."
 
         return freed_size
 
     def delete(self, key):
-        # delete the key-value pair by key
-        # , then return the deleted value(Data object)
+        # delete the key-value pair by key , then return the deleted value(Data
+        # object)
 
         node_targeted, idx = self._search(key)
         deleted_value_data: Data = node_targeted.values[idx]
@@ -1083,27 +1044,25 @@ class VirtualBNode:
         return deleted_value_data
 
     def create(self, key):
-        # note, this method is a special insert method
-        # instead of inserting normal type(string, number etc. type)
-        # you will insert a empty tree(tree type).
+        # note, this method is a special insert method instead of inserting
+        # normal type(string, number etc. type) you will insert a empty
+        # tree(tree type).
 
-        # create a tree-typed value data.
-        # most of the time, this is for building
+        # create a tree-typed value data. most of the time, this is for building
         # hierarchical structure.
 
-        # , you can then .search, and insert data
-        # to this sub-tree
+        # , you can then .search, and insert data to this sub-tree
 
         # for example, first,
         #       node.create('sub')
         # then,
         #       sub = node.search('sub').get()
         #       sub.insert('mykey', 'myvalue')
-        # just act like another database.
-        # (tree in tree, recursively)
 
-        # recap again, most of the time
-        # , this is for building hierarchical structure.
+        # just act like another database. (tree in tree, recursively)
+
+        # recap again, most of the time , this is for building hierarchical
+        # structure.
 
         new_key_p = write_data(self.f, key)
 
@@ -1131,21 +1090,19 @@ class VirtualBNode:
     def freeze(self):
         # this method moves index to the disk.
 
-        # before this method is called, index is cached
-        # in memory and all the index operation (like
-        # splitting, merging) is performed in memory to
+        # before this method is called, index is cached in memory and all the
+        # index operation (like splitting, merging) is performed in memory to
         # boost the index performance.
 
-        # this method involves disk IO operations
-        # , call me when it's really needed.
+        # note, this method involves disk IO operations , call me when it's
+        # really needed.
 
         logger.info('start freezing')
         self._freeze()
         logger.info('end freezing')
 
     def pretty(self, level=0):
-        # pretty the tree recursively.
-        # return formatted str.
+        # pretty the tree recursively. return formatted str.
 
         indent = ' |  ' * level
         result = ''
@@ -1283,19 +1240,22 @@ class VirtualBNode:
 
     def access(self):
         # this method will grab real bnode from disk.
-        # whenever this method is called, that on-disk bnode
-        # will be grabbed and converted to the in-memory bnode
-        # (note, `in-memory bnode` is just a fancy expression for instance
-        # of class in this context)
-        # note, ONLY that ONE bnode is accessed, its children will not
-        # be accessed until you access that each individual child too.
-        # note, this .access method is designed to take advantage of
-        # RAM, the main memory on your computer, which is way faster
-        # than your secondary memory, hard drive. so you have to make
-        # sure that you call .access when it's really needed.
-        # note, when given bnode is accessed(is already a instance), all
-        # the operation(tree-splitting etc.) in the future will be performed
-        # directly on the instance for performance reasons, and write
+        
+        # whenever this method is called, that on-disk bnode will be grabbed and
+        # converted to the in-memory bnode (note, `in-memory bnode` is just a
+        # fancy expression for instance of class in this context)
+        
+        # note, ONLY that ONE bnode is accessed, its children will not be
+        # accessed until you access that each individual child too.
+
+        # note, this .access method is designed to take advantage of RAM, the
+        # main memory on your computer, which is way faster than your secondary
+        # memory, hard drive. so you have to make sure that you call .access
+        # when it's really needed.
+        
+        # note, when given bnode is accessed(is already a instance), all the
+        # operation(tree-splitting tree-merging etc.) in the future will be
+        # performed directly on the instance for performance reasons, and write
         # it back to the disk when .freeze is called.
 
         self.accessed = True
@@ -1316,8 +1276,8 @@ class VirtualBNode:
 
     def find_closest_leaf_node(self, key):
         if not self.accessed:
-            # for continuing finding self, you must ensure that
-            # self is already accessed from the disk before finding.
+            # for continuing finding self, you must ensure that self is already
+            # accessed from the disk before finding.
             self.access()
 
         # quickly check whether our goal is reached.
@@ -1331,9 +1291,8 @@ class VirtualBNode:
 
         child = self.children[idx]
         if not child.accessed:
-            # same reason, if not accessed yet. access it right now.
-            # we have no choice, we are destined to find the closest
-            # leaf node.
+            # same reason, if not accessed yet. access it right now. we have no
+            # choice, we are destined to find the closest leaf node.
             child.access()
 
         # keep looking till leaf node found (recursively)
@@ -1351,22 +1310,18 @@ class VirtualBNode:
 
         # check duplicate key here
         if idx < len(vnode_targeted.keys):
-            # `placed` is the placed key
-            # (already inserted key)
+            
+            # `placed` is the placed key (already inserted key)
             placed = vnode_targeted.keys[idx].get(using_cache=True)
 
-            # `requested` is the requested key
-            # (we, the database, are requested to
-            # insert that key, or in another expression
-            # , that key will be inserted right now
-            # if possible)
+            # `requested` is the requested key (we, the database, are requested
+            # to insert that key, or in another expression , that key will be
+            # inserted right now if possible)
             requested = key.get(using_cache=True)
 
-            # if following condition is true
-            # , the duplicate key must exist.
-            # since we do duplicate-key check
-            # everytime, we can make sure
-            # the Error is raised in time.
+            # if following condition is true , the duplicate key must exist.
+            # since we do duplicate-key check everytime, we can make sure the
+            # Error is raised in time.
             if placed == requested:
                 raise error.DuplicateKeyFound(
                     requested,
@@ -1532,11 +1487,10 @@ class VirtualBNode:
             change_parent(self.parent.children, self.parent)
 
     def split_me(self):
-        # this method is the key to the Btree building
-        # if you are for educational comment, go and check
-        # another python btree source code.
-        # this current file source code is all about
-        # file format and on-disk-database.
+        # this method is the key to the btree building. if you are for
+        # educational comment, go and check another python btree source code.
+        # this current file source code is all about file format and
+        # on-disk-database.
 
         def two_parts(node, middle_idx):
 
@@ -1638,11 +1592,10 @@ class VirtualBNode:
                 return self, idx
 
         if self.is_leaf():
-            # if the searched key is still not found
-            # , the searched key does not exist.
+            # if the searched key is still not found , the searched key does not
+            # exist.
 
-            # but in `peek`, try to return the closest
-            # -right one.
+            # but in `peek`, try to return the closest-right one.
 
             if not_most_right:
                 return self, idx
@@ -1668,8 +1621,8 @@ class VirtualBNode:
     def _search(self, key):
         node, idx = self.peek(key)
 
-        # note, if idx is None, then the searched key is
-        # greater than the max key value in the node.
+        # note, if idx is None, then the searched key is greater than the max
+        # key value in the node.
         if (
             idx is not None and
             node.keys[idx].get(using_cache=True) == key
@@ -1682,46 +1635,42 @@ class VirtualBNode:
             )
 
     def seek_written_position(self):
-        # recap again, if node_p is set to -1
-        # , that means this node have never existed before
-        # , so we need to use new disk space
-        # , as to new space, the end of the file
-        # will be a good choice.
-        # otherwise, just seek to the old node position
-        # for space re-use.
+        # (recap again), if node_p is set to -1 , that means this node have
+        # never existed before , so we need to use new disk space , as to new
+        # space, the end of the file will be a good choice.
+        
+        # otherwise, just seek to the old node position for space re-use.
 
         if self.node_p == -1:
             start_position = f_seek_end(self.f)
         else:
             start_position = self.f.seek(self.node_p)
 
-        # return the seeked position for future purpose
-        # , like we will pass position to so-called parent
-        # node, and position be stored as parent's value-data
-        # pointer or something like that.
+        # return the seeked position for future purpose , like we will pass
+        # position to so-called parent node, and position be stored as parent's
+        # value-data pointer or something like that.
         return start_position
 
     def _freeze(self):
-        # this post-order traversal will be good
-        # bottom(left to right) then top(root)
+        # this post-order traversal will be good bottom (left to right) then
+        # top(root)
 
-        # if current node is never be accessed
-        # , then its children will never be accessed too
-        # , just return the original position will be OK.
+        # if current node is never be accessed , then its children will never be
+        # accessed too , just return the original position will be OK.
         if not self.accessed:
             return self.node_p
 
-        # extract just pointers, which will be written back
-        # to the disk using the helper-format-class
-        # (note, self.keys and self.values are Data typed.
-        # the Data class simplifies the process where
-        # actual can be read from the disk. just use .get()
-        # and every conversion will be done automatically.
-        # obviously when we do freeze, everything we need
-        # is just the pointers(ints), the pointer that guides
-        # us to the place where actual data is stored.
-        # recap: the actual data is always started with one
-        # byte length unsigned integer, that is type code.)
+        # extract just pointers, which will be written back to the disk using
+        # the helper-format-class (in format.py).
+        
+        # (note, self.keys and self.values are Data typed. the Data class
+        # simplifies the process where actual can be read from the disk. just
+        # use .get() and every conversion will be done automatically. obviously
+        # when we do freeze, everything we need is just the pointers (ints), the
+        # pointer that guides us to the place where actual data is stored.
+        
+        # recap: the actual data is always started with one byte length unsigned
+        # integer, that is type code.)
         keys = [
             each.p for each in self.keys
         ]
@@ -1731,18 +1680,17 @@ class VirtualBNode:
 
         # recursive check and traverse tree-typed value
         for value in self.values:
-            # in my implentation, if .is_tree is set to True
-            # , the type of the value must be Tree and must
-            # have been accessed. if value.is_tree is False
-            # , that value may be tree still, but just not
-            # be accessed yet. in this context, `access` means
-            # that the value.get() has been called.
-            # (recap: value.get() will return VirtualBNode if
-            # value type is Tree)
+            # in my implentation, if .is_tree is set to True , the type of the
+            # value must be Tree and must have been accessed. if value.is_tree
+            # is False , that value may be tree still, but just not be accessed
+            # yet. in this context, `access` means that the value.get() has been
+            # called. (recap: value.get() will return VirtualBNode if value type
+            # is Tree)
             if value.is_tree:
                 subtree = value.get(using_cache=True)
-                # use following code to debug, you can see
-                # the python object id of the tree
+                # use following code to debug, you can see the python object id
+                # of the tree
+                
                 # print('subtree', subtree)
 
                 # use ._freeze() to avoid logging
@@ -1914,8 +1862,11 @@ class Database:
 
     def connect(self):
         # return the VirtualBNode instance of current database
-        # note again: VirtualBNode is where all the magic happens.
-        # you can do insert, search etc. operation on it.
+        
+        # note again: VirtualBNode is where all the magic happens. you can do
+        # insert, search etc. operation on it.
+        
+        # go and check VirtualBNode for more information.
 
         self.vnode = VirtualBNode(
             f=self.f,
@@ -1923,13 +1874,14 @@ class Database:
             parent=None,
         )
         self.vnode.access()
+        
         return self.vnode
 
     def close(self):
         # close the database.
-        # you must call this method before you exit your program.
-        # otherwise, there's a high chance that your inserted data will
-        # be lost.
+        
+        # you must call this method before you exit your program. otherwise,
+        # there's a high chance that your inserted data will be lost.
 
         if self.read_only:
             pass
@@ -1939,8 +1891,7 @@ class Database:
                 # make sure the index will be written to the disk
                 self.vnode.freeze()
 
-                # try to close file
-                # that node's using
+                # try to close file that node's using
                 self.vnode.f.close()
 
         # try to close initial file
