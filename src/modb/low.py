@@ -98,14 +98,14 @@ def write_data(f, data):
 
     f_seek_end(f)
     # ---------------------------------
-    blob_p = Types.dump(data, f)
+    blob_p = TypeHelper.dump(data, f)
     # ---------------------------------
 
     return blob_p
 
 
-class Types:
-    # this class load and dump every typed value , plus tppe conversion between
+class TypeHelper:
+    # this class load and dump every typed value , plus type conversion between
     # my own types and python types. for example, when you do insert, your
     # passed str-type value will be converted to format.String type
     # automatically.
@@ -113,10 +113,10 @@ class Types:
     # in this database implentation, value can be typed and inserted(stored),
     # just use one byte length unsigned integer to indicate the type of the
     # stored value. (quick recap, in BNode we store the pointer that points to
-    # the actual stored data, and the data will be parsed by this Types class),
-    # for example, if code if 1 , that indicates the data read afterwards is
-    # Number-typed. so we can do the conversion, like convert Number to python
-    # float.
+    # the actual stored data, and the data will be parsed by this TypeHelper
+    # class), for example, if code if 1 , that indicates the data read
+    # afterwards is Number-typed. so we can do the conversion, like convert
+    # Number to python float.
 
     # note, Tree is a very special value type. you can store tree in tree. in
     # this database implementation, VirtualBNode class is the place where all
@@ -125,7 +125,7 @@ class Types:
     # value is Tree, then .load method will help you jump to that VirtualBNode
     # using so-called node-start -position, which is stored in format.Tree this
     # is important, the Tree data only store the pointer to the next
-    # you-searched Tree ( VirtualBNode)
+    # you-searched Tree (VirtualBNode)
 
     # currently, we have following types supported. where Tree is very special(I
     # remind you this again and again)
@@ -159,7 +159,8 @@ class Types:
             result = obj.n
         elif type_ is Tree:
             # very special. we just load it as the VirtualBNode's instance right
-            # now because Types.load is only called when value.get() is called.
+            # now because TypeHelper.load is only called when value.get() is
+            # called.
 
             root_node_p = obj.root_node.n
             vnode = VirtualBNode(
@@ -201,7 +202,8 @@ class Types:
         # create tree in the current position. return the tree data position
 
         # note: every data starts with code(length U8) to indicate which type of
-        # data comes afterwards. `Types.load` will scan this for proper init.
+        # data comes afterwards. `TypeHelper.load` will scan this for proper
+        # init.
 
         root_node_p = f.tell()
         # create an empty tree(of course, BNodeFormat), the process of building
@@ -213,7 +215,7 @@ class Types:
             children=[],
         ).dump(f)
 
-        return Types.make_tree_type(f, root_node_p)
+        return TypeHelper.make_tree_type(f, root_node_p)
 
     @classmethod
     def dump(cls, data, f):
@@ -234,18 +236,28 @@ class Types:
         elif type_ is list:
             length = len(data)
             power = math.ceil(
-                math.log(length, 2)
+                math.log(
+                    # if length is 0, using 1 instead, then the power will be 0
+                    length or 1,
+                    2,
+                )
             )
 
-            ptrs = [
-                Pointer(
-                    write_data(
-                        f,
-                        el
+            ptrs = []
+            
+            for el in data:
+                if type(el) is Data:
+                    ptrs.append(el.p)
+                else:
+                    ptrs.append(
+                        Pointer(
+                            write_data(
+                                f,
+                                el
+                            )
+                        )
                     )
-                )
-                for el in data
-            ]
+
             p0 = Pointer(0)
 
             ptrs = fill(
@@ -263,7 +275,6 @@ class Types:
                 length=U32(length),
                 start=Pointer(start_p),
             )
-
         else:
             raise RuntimeError("Unsupported type", type_)
 
@@ -385,7 +396,7 @@ class Data:
         f.seek(p)
         # ----------------------------
 
-        data = Types.load(self.f)
+        data = TypeHelper.load(self.f)
 
         # ----------------------------
 
@@ -535,13 +546,17 @@ class VirtualArray:
         # append a new element to the end of the array just like `arr.append`
         # method in python
 
-        value_p = write_data(self.f, value)
-
-        self.container.append(
-            Data(
+        if type(value) is Data:
+            data = value
+        else:
+            value_p = write_data(self.f, value)
+            data = Data(
                 Pointer(value_p),
                 self.f,
             )
+
+        self.container.append(
+            data
         )
         self.length += 1
 
@@ -647,6 +662,13 @@ class VirtualArray:
 
             start_p = self.start_p
 
+        # check every element if it's VirtualBNode, if so, freeze it.
+        for el in self.container:
+            if el is not None:
+                el: Data
+                if el.is_tree:
+                    el.get().freeze()
+
         # at least `length` may change after you do append.
         obj = Array(
             power=U8(self.power),
@@ -736,7 +758,7 @@ class VirtualBNode:
 
     def insert(self, key, value):
         # insert the key-value pair, return Data object of the inserted value.
-        
+
         # when inserting, if the key already exists ,
         # modb.error.DuplicateKeyFound will be raised.
 
@@ -807,7 +829,7 @@ class VirtualBNode:
         # note if subtree is found, return that subtree (Data), so you need to
         # .get() first then you can use .create / .insert etc. just like you do
         #  on the root `node` object.
-        
+
         # quick recap: VirtualBNode is the key to my database implementation.
 
         # init
@@ -829,7 +851,7 @@ class VirtualBNode:
             # typed. so we can search the tree recursively. note, `recursive` in
             # here means we go into the next subtree then maybe go into the next
             # nested tree recursively.
-            
+
             # for example,
             # following two lines are identical.
             # 1. .follow(['a'])
@@ -911,7 +933,7 @@ class VirtualBNode:
         # .vacuum
 
         # technical details:
-        
+
         # replace the old value pointer with the new value pointer , then return
         # the old value Data object (quick recap: Data object holds pointer)
 
@@ -932,7 +954,7 @@ class VirtualBNode:
 
         # after this operation, the database file should be vacuumed, the
         # un-used space will be freed.
-        
+
         # (recap, .update and .delete operation are the two that may make
         # un-used space)
 
@@ -1067,7 +1089,7 @@ class VirtualBNode:
         new_key_p = write_data(self.f, key)
 
         f_seek_end(self.f)
-        new_value_p = Types.create_tree(self.f)
+        new_value_p = TypeHelper.create_tree(self.f)
 
         key_data = Data(
             Pointer(new_key_p),
@@ -1240,11 +1262,11 @@ class VirtualBNode:
 
     def access(self):
         # this method will grab real bnode from disk.
-        
+
         # whenever this method is called, that on-disk bnode will be grabbed and
         # converted to the in-memory bnode (note, `in-memory bnode` is just a
         # fancy expression for instance of class in this context)
-        
+
         # note, ONLY that ONE bnode is accessed, its children will not be
         # accessed until you access that each individual child too.
 
@@ -1252,7 +1274,7 @@ class VirtualBNode:
         # main memory on your computer, which is way faster than your secondary
         # memory, hard drive. so you have to make sure that you call .access
         # when it's really needed.
-        
+
         # note, when given bnode is accessed(is already a instance), all the
         # operation(tree-splitting tree-merging etc.) in the future will be
         # performed directly on the instance for performance reasons, and write
@@ -1310,7 +1332,7 @@ class VirtualBNode:
 
         # check duplicate key here
         if idx < len(vnode_targeted.keys):
-            
+
             # `placed` is the placed key (already inserted key)
             placed = vnode_targeted.keys[idx].get(using_cache=True)
 
@@ -1638,7 +1660,7 @@ class VirtualBNode:
         # (recap again), if node_p is set to -1 , that means this node have
         # never existed before , so we need to use new disk space , as to new
         # space, the end of the file will be a good choice.
-        
+
         # otherwise, just seek to the old node position for space re-use.
 
         if self.node_p == -1:
@@ -1662,13 +1684,13 @@ class VirtualBNode:
 
         # extract just pointers, which will be written back to the disk using
         # the helper-format-class (in format.py).
-        
+
         # (note, self.keys and self.values are Data typed. the Data class
         # simplifies the process where actual can be read from the disk. just
         # use .get() and every conversion will be done automatically. obviously
         # when we do freeze, everything we need is just the pointers (ints), the
         # pointer that guides us to the place where actual data is stored.
-        
+
         # recap: the actual data is always started with one byte length unsigned
         # integer, that is type code.)
         keys = [
@@ -1690,7 +1712,7 @@ class VirtualBNode:
                 subtree = value.get(using_cache=True)
                 # use following code to debug, you can see the python object id
                 # of the tree
-                
+
                 # print('subtree', subtree)
 
                 # use ._freeze() to avoid logging
@@ -1747,11 +1769,11 @@ class VirtualBNode:
             p = data.p.n
             # --------------------------
             self.f.seek(p)
-            k = Types.load(self.f)
+            k = TypeHelper.load(self.f)
             # --------------------------
 
             start_position = f.tell()
-            Types.dump(k, f)
+            TypeHelper.dump(k, f)
             keys.append(start_position)
 
         for data in self.values:
@@ -1765,16 +1787,16 @@ class VirtualBNode:
                 continue
 
             self.f.seek(p)
-            v = Types.load(self.f)
+            v = TypeHelper.load(self.f)
             # --------------------------
 
             if type(v) is VirtualBNode:
                 node_p = v._vacuum(f)
-                start_position = Types.make_tree_type(f, node_p)
+                start_position = TypeHelper.make_tree_type(f, node_p)
 
             else:
                 start_position = f.tell()
-                Types.dump(v, f)
+                TypeHelper.dump(v, f)
 
             self.tmp_vacuum_link_table[p] = start_position
             values.append(start_position)
@@ -1814,6 +1836,34 @@ class VirtualBNode:
         ).dump(f)
 
         return start_position
+
+
+class Type:
+    # this class will be inited by Database.
+
+    # this class is most of the time for user to create special types like Tree.
+    # every factory method will return the Data typed object for future
+    # reference.
+
+    def __init__(
+        self,
+        f: MyIO,
+    ):
+        self.f = f
+
+    def Tree(self):
+        f_seek_end(self.f)
+        p = TypeHelper.create_tree(self.f)
+        data = self._convert_to_Data(p)
+
+        return data
+
+    def _convert_to_Data(self, p):
+        return Data(
+            Pointer(p),
+            self.f,
+            cached=None,
+        )
 
 
 class Database:
@@ -1860,12 +1910,16 @@ class Database:
         # will be VirtualBNode instance after .connect() is called.
         self.vnode = None
 
+        # for user to create typed-data in the database for future reference.
+        # for example insert Data typed data directly
+        self.type = Type(self.f)
+
     def connect(self):
         # return the VirtualBNode instance of current database
-        
+
         # note again: VirtualBNode is where all the magic happens. you can do
         # insert, search etc. operation on it.
-        
+
         # go and check VirtualBNode for more information.
 
         self.vnode = VirtualBNode(
@@ -1874,12 +1928,12 @@ class Database:
             parent=None,
         )
         self.vnode.access()
-        
+
         return self.vnode
 
     def close(self):
         # close the database.
-        
+
         # you must call this method before you exit your program. otherwise,
         # there's a high chance that your inserted data will be lost.
 

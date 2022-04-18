@@ -9,8 +9,9 @@ from modb import low
 
 
 class Database:
-    # most-high-level api
-    # , that wrap the core DataBase.
+    # most-high-level api, which wrap the core DataBase.
+
+    # go and check low.Database for more information
 
     def __init__(self, filename, read_only=False):
         self.filename = filename
@@ -20,6 +21,8 @@ class Database:
             filename=self.filename,
             read_only=self.read_only,
         )
+        
+        self.type = self.db.type
 
     def connect(self) -> low.VirtualBNode:
         return self.db.connect()
