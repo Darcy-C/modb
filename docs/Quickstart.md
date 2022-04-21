@@ -52,6 +52,30 @@ node.insert(
 )
 ```
 
+If you want to build a very hierarchical structure just like `dict` or `json`, you could insert a dict-typed value like this.
+
+```python title="Insert new tree"
+node.insert(
+    key="sub",
+    value={
+        "sub_a": "sub_a_value",
+        "sub_b": "sub_b_value",
+    }
+)
+# note, the new tree needed will be created automatically.
+
+# for search, you can use this sugar to access the nested key
+resp = node['sub']['sub_a']
+# just like you do to a nested dict
+
+value = resp.get()
+print(value)
+# -> "sub_a_value"
+```
+
+!!! Tip
+    `node['sub'].get()` and `node` are of same type, which is `modb.low.VirtualBNode`.
+
 ## Search
 
 So now, since we have something inserted into our `node` 
@@ -82,38 +106,11 @@ This time, the actual data will be read (if on disk).
 !!! tip
     `resp` is short for response if you're curious. That's just a fancy word for return value.
 
-## Create
-
-If you want to build a very hierarchical structure just like `dict` or `json`, you can use `create` method of your targeted node.
-!!! note "Note about `create` method"
-    `create` is a very special `insert` operation in this database
-
-For example, you can have subtree in our initial `node`
-```python
-# first create a subtree with the key "my_subtree" 
-node.create("my_subtree")
-
-# then get that `node` representing that subtree
-my_subtree = node.search("my_subtree").get()
+    
+```python title="Grammar sugar"
+resp = node['hello']
 ```
 
-For now, the variable `my_subtree` is just like the initial `node`, they are of the same type. You can do every operations you just learned to this `my_subtree`.
-
-For those guys that still do not take this concept, you can think of the current `node` as follows:
-```python
-{
-    "hello": "world",
-    "hi": "my own database",
-    "my_subtree": {
-        # when you do operations to my_subtree,
-        # like .insert, then the inserted key-value
-        # pair will go here.
-    },
-}
-# I hope you understand it now.
-```
-
-So, recap again, this `create` method is just a special case of `insert`.
 
 ## Update
 

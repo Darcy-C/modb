@@ -2,14 +2,14 @@ We have data in database, the stored data must be typed for our convenience.
 
 ## Supported types
 
-| Type    | Code | Type in Python          |
-| ------- | ---- | ----------------------- |
-| String  | 0    | str                     |
-| Number  | 1    | float                   |
-| Tree    | 2    | `modb.low.VirtualBNode` |
-| Empty   | 3    | None                    |
-| Boolean | 4    | bool                    |
-| Bytes   | 5    | bytes                   |
+| Type    | Code | Type in Python |
+| ------- | ---- | -------------- |
+| String  | 0    | str            |
+| Number  | 1    | float          |
+| Tree    | 2    | dict           |
+| Empty   | 3    | None           |
+| Boolean | 4    | bool           |
+| Bytes   | 5    | bytes          |
 
 1. The first column is the type class used by modb internally.
 2. The second column is the type code used by modb internally to identify the type of the data read in database binary. 
@@ -27,6 +27,24 @@ We have data in database, the stored data must be typed for our convenience.
     * Only one type can be inserted to one `node`, for example, if you insert str-type key once, then you can not insert other typed data from now on. The value data does not have this limitation.
     * For simplicity, this limitation will not be released in near future.
 
+!!! note "Note about Tree"
+    For `Tree` in `modb`, we use `dict` for inserting, `modb.low.VirtualBNode` for manipulating. 
+
+    ```python
+    # for inserting
+    node.insert(
+        key="sub",
+        value={
+            "a": "b",
+            "c": "d",
+        }
+        # which is `dict` typed
+    )
+
+    # for manipulating
+    node['sub'].get()
+    # which is `modb.low.VirtualBNode` typed
+    ```
 
 ## Layout in binary
 
