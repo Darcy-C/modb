@@ -1,7 +1,7 @@
 import io
 
 # local imports
-pass
+import modb.constant
 
 
 def fill(seq, n, obj):
@@ -17,3 +17,6 @@ def f_seek_end(f):
 
 def max_array_length(power):
     return 2 ** power
+
+def make_indent(level):
+    return modb.constant.INDENT_TEMPLATE * level

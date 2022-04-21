@@ -187,6 +187,7 @@ class TypeHelper:
 
         return result
 
+    # deprecated from version 2022y 4m 21d on
     @classmethod
     def make_tree_type(cls, f, root_node_p):
         tree_p = f.tell()
@@ -197,6 +198,7 @@ class TypeHelper:
 
         return tree_p
 
+    # deprecated from version 2022y 4m 21d on
     @classmethod
     def create_tree(cls, f):
         # create tree in the current position. return the tree data position
@@ -244,7 +246,7 @@ class TypeHelper:
             )
 
             ptrs = []
-            
+
             for el in data:
                 if type(el) is Data:
                     ptrs.append(el.p)
@@ -266,7 +268,7 @@ class TypeHelper:
                 p0,
             )
 
-            start_p = f.tell()
+            start_p = f_seek_end(f)
             for i in ptrs:
                 i.dump(f)
 
@@ -275,11 +277,42 @@ class TypeHelper:
                 length=U32(length),
                 start=Pointer(start_p),
             )
+
+        elif type_ is dict:
+            root_node_p = f_seek_end(f)
+            BNodeFormat(
+                keys=[],
+                values=[],
+                children=[],
+            ).dump(f)
+            obj = Tree(Pointer(root_node_p))
+
+            code = cls.types.index(type(obj))
+            data_p = f.tell()
+            U8(code).dump(f)
+            obj.dump(f)
+
+            vnode: VirtualBNode = Data(
+                Pointer(data_p),
+                f,
+                cached=None,
+            ).get()
+            vnode.access()
+
+            for k, v in data.items():
+                vnode.insert(
+                    key=k,
+                    value=v,
+                )
+            vnode.freeze()
+
+            return data_p
+
         else:
             raise RuntimeError("Unsupported type", type_)
 
         code = cls.types.index(type(obj))
-        data_p = f.tell()
+        data_p = f_seek_end(f)
         U8(code).dump(f)
         obj.dump(f)
         return data_p
@@ -418,6 +451,14 @@ class Data:
 
         return data
 
+    def __getitem__(self, key):
+        return self.get()[key]
+
+    def __iter__(self):
+        raise RuntimeError(
+            "You may use .get() first to get the actual data."
+        )
+
     def __lt__(self, other):
         # compare function used by btree. that's the key to the btree
         # implementation.
@@ -509,6 +550,16 @@ class VirtualArray:
 
     # public methods as follows
 
+    def __getitem__(self, key):
+        return self.access(key)
+
+    def __len__(self):
+        return self.length
+
+    def __iter__(self):
+        for i in range(self.length):
+            yield self.access(i)
+
     def access(self, idx):
         # access the given index of the array just like `arr[idx]` in python
 
@@ -581,6 +632,20 @@ class VirtualArray:
         self.container[idx] = value_data
 
         return value_data
+
+    def pretty(self, level=0):
+        indent = make_indent(level)
+        result = f'{indent} [ \n'
+
+        for i in range(self.length):
+            el = self.access(i).get()
+            if hasattr(el, "pretty"):
+                result += getattr(el, "pretty")(level+1)
+            else:
+                result += f'{make_indent(level+1)}{el!r} \n'
+
+        result += f"{indent} ] \n"
+        return result
 
     # private methods as follows
 
@@ -820,7 +885,13 @@ class VirtualBNode:
         node, idx = self._search(key)
         return node.values[idx]
 
+    def __getitem__(self, key):
+        return self.search(key)
+
     def follow(self, key_path: list):
+        # from version 2022y 4m 21d on: this method is only for educational
+        # purposes, because of self.__getitem__ and Data.__getitem__
+
         # this is a helper method to search the key recursively.
 
         # since this database structure is just like json. the hierarchy can be
@@ -1065,6 +1136,7 @@ class VirtualBNode:
 
         return deleted_value_data
 
+    # deprecated from version 2022y 4m 21d on
     def create(self, key):
         # note, this method is a special insert method instead of inserting
         # normal type(string, number etc. type) you will insert a empty
@@ -1126,7 +1198,7 @@ class VirtualBNode:
     def pretty(self, level=0):
         # pretty the tree recursively. return formatted str.
 
-        indent = ' |  ' * level
+        indent = make_indent(level)
         result = ''
 
         for key, value in self.items():
@@ -1134,7 +1206,10 @@ class VirtualBNode:
             v = value.get()
 
             if type(v) is VirtualBNode:
-                result += f'{indent}{k!r}:\n'
+                result += f'{indent}{k!r}: (Tree)\n'
+                result += v.pretty(level+1)
+            elif type(v) is VirtualArray:
+                result += f'{indent}{k!r}: (Array)\n'
                 result += v.pretty(level+1)
             else:
                 result += f'{indent}{k!r}: {v!r}\n'
@@ -1838,34 +1913,6 @@ class VirtualBNode:
         return start_position
 
 
-class Type:
-    # this class will be inited by Database.
-
-    # this class is most of the time for user to create special types like Tree.
-    # every factory method will return the Data typed object for future
-    # reference.
-
-    def __init__(
-        self,
-        f: MyIO,
-    ):
-        self.f = f
-
-    def Tree(self):
-        f_seek_end(self.f)
-        p = TypeHelper.create_tree(self.f)
-        data = self._convert_to_Data(p)
-
-        return data
-
-    def _convert_to_Data(self, p):
-        return Data(
-            Pointer(p),
-            self.f,
-            cached=None,
-        )
-
-
 class Database:
     # relatively high-level api that users can use directly.
 
@@ -1909,10 +1956,6 @@ class Database:
 
         # will be VirtualBNode instance after .connect() is called.
         self.vnode = None
-
-        # for user to create typed-data in the database for future reference.
-        # for example insert Data typed data directly
-        self.type = Type(self.f)
 
     def connect(self):
         # return the VirtualBNode instance of current database

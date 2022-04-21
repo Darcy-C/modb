@@ -21,8 +21,6 @@ class Database:
             filename=self.filename,
             read_only=self.read_only,
         )
-        
-        self.type = self.db.type
 
     def connect(self) -> low.VirtualBNode:
         return self.db.connect()

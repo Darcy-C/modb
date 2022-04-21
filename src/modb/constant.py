@@ -13,3 +13,6 @@ BNODE_MAX_CAPACITY = BNODE_ORDER - 1
 BNODE_MIN_CAPACITY = math.ceil(
     BNODE_ORDER / 2
 ) - 1
+
+# for `.pretty` and `modb.util.make_indent`
+INDENT_TEMPLATE = " | "
