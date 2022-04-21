@@ -451,6 +451,9 @@ class Data:
 
         return data
 
+    def __getattr__(self, key):
+        return self.__getitem__(key)
+    
     def __getitem__(self, key):
         return self.get()[key]
 
@@ -889,6 +892,9 @@ class VirtualBNode:
 
         node, idx = self._search(key)
         return node.values[idx]
+
+    def __getattr__(self, key):
+        return self.__getitem__(key)
 
     def __getitem__(self, key):
         return self.search(key)
