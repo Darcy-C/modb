@@ -639,8 +639,13 @@ class VirtualArray:
 
         for i in range(self.length):
             el = self.access(i).get()
-            if hasattr(el, "pretty"):
-                result += getattr(el, "pretty")(level+1)
+
+            if type(el) is VirtualBNode:
+                result += f'{indent} (Tree) \n'
+                result += el.pretty(level+1)
+            elif type(el) is VirtualArray:
+                result += f'{indent} (Array) \n'
+                result += el.pretty(level+1)
             else:
                 result += f'{make_indent(level+1)}{el!r} \n'
 
@@ -1114,6 +1119,7 @@ class VirtualBNode:
         # object)
 
         node_targeted, idx = self._search(key)
+        node_targeted.modified = True
         deleted_value_data: Data = node_targeted.values[idx]
 
         if node_targeted.is_leaf():
@@ -1461,9 +1467,12 @@ class VirtualBNode:
         return idx
 
     def merge_me(self):
+        self.modified = True
+        
         def change_parent(nodes, new_parent):
             for node in nodes:
                 node.parent = new_parent
+                node.modified = True
 
         # if leaf node
         #       if more than minimum number of keys
@@ -1476,6 +1485,7 @@ class VirtualBNode:
         if idx == 0:
             # find right sibling
             right_sibling = self.parent.children[idx+1]
+            right_sibling.modified = True
 
             # if right sibling can give me a key
             if len(right_sibling.keys) > self.min_capacity:
@@ -1527,6 +1537,7 @@ class VirtualBNode:
         else:
             # find left sibling
             left_sibling = self.parent.children[idx-1]
+            left_sibling.modified = True
 
             # if left sibling can give me a key
             if len(left_sibling.keys) > self.min_capacity:
